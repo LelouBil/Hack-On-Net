@@ -2,7 +2,9 @@
 using HackLinks_Server.Files;
 using MySql.Data.MySqlClient;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,25 +15,22 @@ namespace HackLinks_Server.Computers
     public class ComputerManager
     {
         Server server;
-
-        private List<Node> nodeList = new List<Node>();
+        
         private List<File> toDelete = new List<File>();
-
-        public List<Node> NodeList => nodeList;
         public List<File> ToDelete => toDelete;
+        public DbSet<Node> NodeList => server.DatabaseLink.Computers;
 
-        public ComputerManager(Server server, List<Node> nodeList)
+        public ComputerManager(Server server)
         {
             this.server = server;
-            this.nodeList = nodeList;
         }
 
         public void Init()
         {
             Logger.Info("Initializing daemons");
-            foreach (Node node in nodeList)
+            foreach (Node node in server.DatabaseLink.Computers)
             {
-                var daemonsFolder = node.fileSystem.rootFile.GetFile("daemons");
+                var daemonsFolder = node.fileSystem.RootFile.GetFile("daemons");
                 if (daemonsFolder == null)
                     continue;
                 var autorunFile = daemonsFolder.GetFile("autorun");
@@ -54,20 +53,11 @@ namespace HackLinks_Server.Computers
 
         public Node GetNodeByIp(string ip)
         {
-            foreach(Node node in nodeList)
-            {
-                if (node.ip == ip)
-                    return node;
-            }
-            return null;
+            return server.DatabaseLink.Computers.FirstOrDefault(n => n.ip.Equals(ip));
         }
 
-        public Node GetNodeById(int homeId)
-        {
-            foreach (Node node in nodeList)
-                if (node.id == homeId)
-                    return node;
-            return null;
+        public Node GetNodeById(int homeId) {
+            return server.DatabaseLink.Computers.Find(homeId);
         }
 
         public static void FixFolder(List<File> files, File rootFile)
@@ -80,11 +70,11 @@ namespace HackLinks_Server.Computers
             while(fileQueue.Any())
             {
                 File parent = fileQueue.Dequeue();
-                Logger.Info($"Processing File {parent.Name} {parent.id}");
+                Logger.Info($"Processing File {parent.Name} ");
 
                 foreach (File child in files.Where(x => x.Parent.Equals(parent)))
                 {
-                    Logger.Info($"Processing Child File {child.Name} {child.id} of {parent.Name} {parent.id}");
+                    Logger.Info($"Processing Child File {child.Name} of {parent.Name} ");
 
                     child.Parent = parent;
                     parent.children.Add(child);

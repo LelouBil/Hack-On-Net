@@ -42,7 +42,7 @@ namespace HackLinks_Server.Computers.Processes
             ProcessId = pid;
             this.printer = printer ?? delegate { };
             this.computer = computer;
-            ActiveDirectory = computer.fileSystem.rootFile;
+            ActiveDirectory = computer.fileSystem.RootFile;
             Credentials = credentials;
 
             CurrentState = State.New;

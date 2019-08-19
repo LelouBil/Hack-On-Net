@@ -98,7 +98,6 @@
     <Compile Include="Computers\Groups.cs" />
     <Compile Include="Computers\FilePermissions.cs" />
     <Compile Include="Computers\ComputerManager.cs" />
-    <Compile Include="Computers\Files\FileSystemManager.cs" />
     <Compile Include="Computers\Files\FileSystem.cs" />
     <Compile Include="Computers\Log.cs" />
     <Compile Include="Computers\Node.cs" />

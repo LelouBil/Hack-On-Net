@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HackLinks_Server.Computers;
 using System.Text.RegularExpressions;
+using HackLinks_Server.Computers.DataObjects;
 using static HackLinksCommon.NetUtil;
 using HackLinks_Server.Computers.Files;
 using HackLinks_Server.Database;
@@ -22,10 +23,7 @@ namespace HackLinks_Server
         public List<GameClient> clients;
 
         private ComputerManager computerManager;
-        private FileSystemManager fileSystemManager = new FileSystemManager();
         private CompiledFileManager compileManager = new CompiledFileManager();
-
-        public FileSystemManager FileSystemManager => fileSystemManager;
 
         public DatabaseLink DatabaseLink { get; private set; }
 
@@ -42,7 +40,7 @@ namespace HackLinks_Server
         public void StartServer()
         {
             Logger.Info("Downloading Computer data...");
-            computerManager = new ComputerManager(this, DatabaseLink.DownloadDatabase());
+            computerManager = new ComputerManager(this);
             computerManager.Init();
             Logger.Info("Computer data loaded");
         }
@@ -82,9 +80,9 @@ namespace HackLinks_Server
                     string tempPass = messages[1];
                     int banExpiry;
 
-                    if (DatabaseLink.TryLogin(client, tempUsername, tempPass, out int homeId))
+                    if (DatabaseLink.TryLogin(client, tempUsername, tempPass, out ServerAccount account))
                     {
-                        client.username = tempUsername;
+                        client.account = account;
                         if (/*DatabaseLink.CheckUserBanStatus(client.username, out banExpiry)*/false)
                         {
                             if (banExpiry == 0)
@@ -98,15 +96,14 @@ namespace HackLinks_Server
                             break;
                         }
                         client.Send(PacketType.LOGRE, "0"); // Good account*/
-                        var homeNode = computerManager.GetNodeById(homeId);
+                        var homeNode = account.homeComputer;
                         var ip = "none";
                         if (homeNode != null)
                         {
                             ip = homeNode.ip;
                             client.homeComputer = homeNode;
                         }
-                        client.permissions = DatabaseLink.GetUserPermissions()[client.username];
-                        client.Send(PacketType.START, ip, DatabaseLink.GetUserNodes(client.username));
+                        client.Send(PacketType.START, ip, client.account.StringMap);
                     }
                     else
                     {
@@ -124,7 +121,7 @@ namespace HackLinks_Server
         {
             if(client.activeSession != null)
                 client.activeSession.DisconnectSession();
-            Logger.Info(client.username + " disconnected from server.");
+            Logger.Info(client.account + " disconnected from server.");
             clients.Remove(client);
         }
 
@@ -154,9 +151,9 @@ namespace HackLinks_Server
             return compileManager;
         }
 
-        internal void SaveDatabase()
-        {
-            DatabaseLink.UploadDatabase(computerManager.NodeList, computerManager.ToDelete);
-        }
+//        internal void SaveDatabase()
+//        {
+//            DatabaseLink.UploadDatabase(computerManager.NodeList, computerManager.ToDelete);
+//        }
     }
 }

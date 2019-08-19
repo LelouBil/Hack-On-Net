@@ -27,10 +27,7 @@ namespace HackLinks_Server.Database
         }
 
         public static void addBinaries() {
-//            $"INSERT INTO `binaries` VALUES "+
-//                $"(0,{"hackybox".GetHashCode()},'Hackybox'),"+
-//                $"(0,{"serveradmin".GetHashCode()},'ServerAdmin'),"+
-//                $"(0,{"computeradmin".GetHashCode()},'ComputerAdmin')",
+
         }
 
         public static List<string> Commands => commands;

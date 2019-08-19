@@ -54,7 +54,7 @@ namespace HackLinks_Server.Daemons.Types {
         public void LoadEntries()
         {
             this.entries.Clear();
-            File entryFile = node.fileSystem.rootFile.GetFileAtPath(DEFAULT_CONFIG_PATH);
+            File entryFile = node.fileSystem.RootFile.GetFileAtPath(DEFAULT_CONFIG_PATH);
             if (entryFile == null)
                 return;
             foreach (string line in entryFile.Content.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries))

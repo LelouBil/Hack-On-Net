@@ -57,10 +57,20 @@ namespace HackLinks_Server.Computers
 
 
         public int NextPID => freedPIDs.Count > 0 ? freedPIDs.Pop() : nextPID++;
+        public static IEnumerable<Node> Defaults { get; set; } = new List<Node>() {
+            new Node() {
+                ip = "8.8.8.8",
+                owner = ServerAccount.Defaults[0]
+            }
+        };
 
         public Node() {
-            fileSystem = new FileSystem(Server.Instance.FileSystemManager,this);
+            fileSystem = new FileSystem();
             Kernel = new Kernel(this);
+        }
+
+        public Node(string ip) : this() {
+            this.ip = ip;
         }
 
         public Session GetSession(int processId)
@@ -83,7 +93,7 @@ namespace HackLinks_Server.Computers
 
         public string GetDisplayName()
         {
-            var cfgFile = fileSystem.rootFile.GetFileAtPath(SERVER_CONFIG_PATH);
+            var cfgFile = fileSystem.RootFile.GetFileAtPath(SERVER_CONFIG_PATH);
             if (cfgFile == null)
                 return ip;
             var lines = cfgFile.GetLines();
@@ -99,7 +109,7 @@ namespace HackLinks_Server.Computers
         {
             if (string.IsNullOrWhiteSpace(bankAccountRedirectionInfo))
             {
-                var cfgFile = fileSystem.rootFile.GetFileAtPath("/cfg/BankAccountRedirectionInfo.cfg");
+                var cfgFile = fileSystem.RootFile.GetFileAtPath("/cfg/BankAccountRedirectionInfo.cfg");
                 if (cfgFile != null)
                     bankAccountRedirectionInfo = cfgFile.Content;
             }
@@ -156,7 +166,7 @@ namespace HackLinks_Server.Computers
 
         public string GetUserShell(int userId)
         {
-            File configFolder = fileSystem.rootFile.GetFile("etc");
+            File configFolder = fileSystem.RootFile.GetFile("etc");
             if (configFolder == null || !configFolder.IsFolder())
             {
                 return "";
@@ -209,7 +219,7 @@ namespace HackLinks_Server.Computers
 
         public string GetUsername(int userId)
         {
-            File configFolder = fileSystem.rootFile.GetFile("etc");
+            File configFolder = fileSystem.RootFile.GetFile("etc");
             if (configFolder == null || !configFolder.IsFolder())
             {
                 return "";
@@ -243,7 +253,7 @@ namespace HackLinks_Server.Computers
 
         public int GetUserId(string username)
         {
-            File configFolder = fileSystem.rootFile.GetFile("etc");
+            File configFolder = fileSystem.RootFile.GetFile("etc");
             if (configFolder == null || !configFolder.IsFolder())
             {
                 return -1;
@@ -279,7 +289,7 @@ namespace HackLinks_Server.Computers
         // TODO Log Errors to log file?
         public Credentials Login(GameClient client, string username, string password)
         {
-            var configFolder = fileSystem.rootFile.GetFile("etc");
+            var configFolder = fileSystem.RootFile.GetFile("etc");
             if (configFolder == null || !configFolder.IsFolder())
             {
                 client.Send(NetUtil.PacketType.MESSG, "No config folder was found!");
@@ -345,7 +355,7 @@ namespace HackLinks_Server.Computers
         public void Log(Log.LogEvents logEvent, string message, int sessionId, string ip)
         {
             File logsFolder = null;
-            foreach (var file in fileSystem.rootFile.children)
+            foreach (var file in fileSystem.RootFile.children)
             {
                 if (file.Name == "logs")
                 {
@@ -355,7 +365,7 @@ namespace HackLinks_Server.Computers
             }
             if (logsFolder == null)
             {
-                logsFolder = File.CreateNewFolder(fileSystem.fileSystemManager, this, fileSystem.rootFile, "logs");
+                logsFolder = File.CreateNewFolder( fileSystem.RootFile, "logs");
                 logsFolder.OwnerId = 0;
                 logsFolder.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, true);
                 logsFolder.Permissions.SetPermission(FilePermissions.PermissionType.Group, true, true, true);
@@ -363,7 +373,7 @@ namespace HackLinks_Server.Computers
                 logsFolder.Type = File.FileType.LOG;
             }
             message = message.Replace(' ', '_');
-            File logFile = File.CreateNewFile(fileSystem.fileSystemManager, this, logsFolder, message);
+            File logFile = File.CreateNewFile(logsFolder, message);
             logFile.OwnerId = 0;
             logFile.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, true);
             logFile.Permissions.SetPermission(FilePermissions.PermissionType.Group, true, true, true);
@@ -375,7 +385,7 @@ namespace HackLinks_Server.Computers
         public void Log(Log.LogEvents logEvent, string message, string messageExtended, int sessionId, string ip)
         {
             File logsFolder = null;
-            foreach (var file in fileSystem.rootFile.children)
+            foreach (var file in fileSystem.RootFile.children)
             {
                 if (file.Name == "logs")
                 {
@@ -385,14 +395,14 @@ namespace HackLinks_Server.Computers
             }
             if (logsFolder == null)
             {
-                logsFolder = File.CreateNewFolder(fileSystem.fileSystemManager, this, fileSystem.rootFile, "logs");
+                logsFolder = File.CreateNewFolder(fileSystem.RootFile, "logs");
                 logsFolder.OwnerId = 0;
                 logsFolder.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, true);
                 logsFolder.Permissions.SetPermission(FilePermissions.PermissionType.Group, true, true, true);
                 logsFolder.Group = logsFolder.Parent.Group;
                 logsFolder.Type = File.FileType.LOG;
             }
-            File logFile = File.CreateNewFile(fileSystem.fileSystemManager, this, logsFolder, message);
+            File logFile = File.CreateNewFile(logsFolder, message);
             logFile.OwnerId = 0;
             logFile.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, true);
             logFile.Permissions.SetPermission(FilePermissions.PermissionType.Group, true, true, true);
@@ -405,7 +415,7 @@ namespace HackLinks_Server.Computers
         {
             List<Log> logs = new List<Log>();
             File logsFolder = null;
-            foreach (var file in fileSystem.rootFile.children)
+            foreach (var file in fileSystem.RootFile.children)
             {
                 if (file.Name == "logs")
                 {
@@ -471,9 +481,9 @@ namespace HackLinks_Server.Computers
 
         internal void SetRoot(File newFile)
         {
-            if(fileSystem.rootFile != null)
+            if(fileSystem.RootFile != null)
                 throw new ArgumentException("Root file for this computer is already set.");
-            fileSystem.rootFile = newFile;
+            fileSystem.RootFile = newFile;
         }
 
         internal void RegisterProcess(Process process)

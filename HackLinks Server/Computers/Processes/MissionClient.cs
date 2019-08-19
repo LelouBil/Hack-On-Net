@@ -42,7 +42,7 @@ namespace HackLinks_Server.Computers.Processes
             MissionClient client = (MissionClient)process;
             MissionDaemon daemon = (MissionDaemon)client.Daemon;
 
-            var missionFolder = process.computer.fileSystem.rootFile.GetFile("mission");
+            var missionFolder = process.computer.fileSystem.RootFile.GetFile("mission");
             var accountFile = missionFolder.GetFile("accounts.db");
             var missionFile = missionFolder.GetFile("missions.db");
 
@@ -73,7 +73,7 @@ namespace HackLinks_Server.Computers.Processes
                         if (mission.status == MissionListing.Status.Unclaimed)
                             missionsForClient += mission.id + " " + mission.missionName + " " + mission.requiredRanking + " " + mission.difficulty + " " + mission.status + " " + mission.employer + "\n";
                     }
-                    File missionFileForClient = client.Session.owner.homeComputer.fileSystem.rootFile.GetFile("Missions_On_" + client.computer.ip);
+                    File missionFileForClient = client.Session.owner.homeComputer.fileSystem.RootFile.GetFile("Missions_On_" + client.computer.ip);
                     if (missionFileForClient == null)
                     {
                         if (missionsForClient == "ID  MISSION NAME                                REQUIRED RANKING  DIFFICULTY  STATUS  EMPLOYER\n")
@@ -81,7 +81,7 @@ namespace HackLinks_Server.Computers.Processes
                             process.Print("There are currently no missions visible to you");
                             return true;
                         }
-                        missionFileForClient = client.Session.owner.homeComputer.fileSystem.CreateFile(client.Session.owner.homeComputer, client.Session.owner.homeComputer.fileSystem.rootFile, "Missions_On_" + client.computer.ip);
+                        missionFileForClient = client.Session.owner.homeComputer.fileSystem.RootFile.MkFile("Missions_On_" + client.computer.ip);
                         missionFileForClient.Content = missionsForClient;
                         missionFileForClient.OwnerId = 0;
                         missionFileForClient.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, true);
@@ -112,7 +112,7 @@ namespace HackLinks_Server.Computers.Processes
                         if (mission.employer == client.loggedInAccount.accountName)
                             missionsForClient += mission.id + " " + mission.missionName + " " + mission.requiredRanking + " " + mission.difficulty + " " + mission.status + " " + mission.employer + "\n";
                     }
-                    File missionFileForClient = client.Session.owner.homeComputer.fileSystem.rootFile.GetFile("Your_Missions_On_" + client.computer.ip);
+                    File missionFileForClient = client.Session.owner.homeComputer.fileSystem.RootFile.GetFile("Your_Missions_On_" + client.computer.ip);
                     if (missionFileForClient == null)
                     {
                         if (missionsForClient == "ID  MISSION NAME                                REQUIRED RANKING  DIFFICULTY  STATUS  EMPLOYER\n")
@@ -120,7 +120,7 @@ namespace HackLinks_Server.Computers.Processes
                             process.Print("There are currently no missions visible to you");
                             return true;
                         }
-                        missionFileForClient = client.Session.owner.homeComputer.fileSystem.CreateFile(client.Session.owner.homeComputer, client.Session.owner.homeComputer.fileSystem.rootFile, "Your_Missions_On_" + client.computer.ip);
+                        missionFileForClient = client.Session.owner.homeComputer.fileSystem.RootFile.MkFile("Your_Missions_On_" + client.computer.ip);
                         missionFileForClient.Content = missionsForClient;
                         missionFileForClient.OwnerId = 0;
                         missionFileForClient.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, true);
@@ -460,7 +460,7 @@ namespace HackLinks_Server.Computers.Processes
             MissionClient client = (MissionClient)process;
             MissionDaemon daemon = (MissionDaemon)client.Daemon;
 
-            var missionFolder = process.computer.fileSystem.rootFile.GetFile("mission");
+            var missionFolder = process.computer.fileSystem.RootFile.GetFile("mission");
             var accountFile = missionFolder.GetFile("accounts.db");
 
             if (command[0] == "account")
@@ -501,7 +501,7 @@ namespace HackLinks_Server.Computers.Processes
                     {
                         foreach (var account in daemon.accounts)
                         {
-                            if (account.clientUsername == client.Session.owner.username)
+                            if (account.ServerAccount == client.Session.owner.account)
                             {
                                 process.Print("You already have an account on this mission board.\nTo reset your password, use account resetpass");
                                 return true;
@@ -525,7 +525,7 @@ namespace HackLinks_Server.Computers.Processes
                         process.Print("This account name is not available");
                         return true;
                     }
-                    daemon.accounts.Add(new MissionAccount(cmdArgs[1], 0, 0, cmdArgs[3], client.Session.owner.username, cmdArgs[2]));
+                    daemon.accounts.Add(new MissionAccount(cmdArgs[1], 0, 0, cmdArgs[3], client.Session.owner.account, cmdArgs[2]));
                     daemon.UpdateAccountDatabase();
                     process.Print("Your account has been opened. Use account login [accountname] [password] to login.");
                 }

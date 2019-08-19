@@ -33,7 +33,7 @@ namespace HackLinks_Server.Computers.Processes {
             MailClient client = (MailClient)process;
             MailDaemon daemon = (MailDaemon)client.Daemon;
 
-            File mailFolder = process.computer.fileSystem.rootFile.GetFile("mail");
+            File mailFolder = process.computer.fileSystem.RootFile.GetFile("mail");
             File accountFile = mailFolder.GetFile("accounts.db");
 
             if (command.Length < 2) {
@@ -106,7 +106,7 @@ namespace HackLinks_Server.Computers.Processes {
             MailClient client = (MailClient)process;
             MailDaemon daemon = (MailDaemon)client.Daemon;
 
-            File mailFolder = process.computer.fileSystem.rootFile.GetFile("mail");
+            File mailFolder = process.computer.fileSystem.RootFile.GetFile("mail");
 
             if (command.Length < 2) {
                 process.Print("Usage : config dns [IP]");
@@ -131,12 +131,12 @@ namespace HackLinks_Server.Computers.Processes {
                     process.Print($"{cmdArgs[1]} does not exist!");
                     return true;
                 }
-                File dnsDaemon = dnsServer.fileSystem.rootFile.GetFileAtPath("daemons/dns");
+                File dnsDaemon = dnsServer.fileSystem.RootFile.GetFileAtPath("daemons/dns");
                 if (dnsDaemon == null) {
                     process.Print($"{dnsServer.ip} doesn't have a DNS daemon");
                     return true;
                 }
-                File configFile = client.computer.fileSystem.rootFile.GetFileAtPath("mail/config.json");
+                File configFile = client.computer.fileSystem.RootFile.GetFileAtPath("mail/config.json");
                 JObject configObject = JObject.Parse(configFile.Content);
                 configObject["DNS"] = cmdArgs[1];
                 configFile.Content = configObject.ToString();
@@ -150,7 +150,7 @@ namespace HackLinks_Server.Computers.Processes {
             MailClient client = (MailClient)process;
             MailDaemon daemon = (MailDaemon)client.Daemon;
 
-            File mailFolder = process.computer.fileSystem.rootFile.GetFile("mail");
+            File mailFolder = process.computer.fileSystem.RootFile.GetFile("mail");
 
             if (command.Length < 2) {
                 process.Print("Usage : send [username@ip] [message]");
@@ -173,7 +173,7 @@ namespace HackLinks_Server.Computers.Processes {
                 process.Print("You aren't logged in!");
                 return true;
             }
-            JObject config = JObject.Parse(process.computer.fileSystem.rootFile.GetFileAtPath("mail/config.json").Content);
+            JObject config = JObject.Parse(process.computer.fileSystem.RootFile.GetFileAtPath("mail/config.json").Content);
             Node dnsServer = Server.Instance.GetComputerManager().GetNodeByIp(config.Properties()
                 .Where(x => x.Name == "DNS")
                 .Select(y => { return (string)y.Value; })
@@ -203,8 +203,8 @@ namespace HackLinks_Server.Computers.Processes {
                 process.Print("The receiving account does not exist!");
                 return true;
             }
-            File userSentDir = process.computer.fileSystem.rootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Sent");
-            File messageFile = File.CreateNewFile(process.computer.fileSystem.fileSystemManager, process.computer, userSentDir, $"{userSentDir.children.Count + 1}.json");
+            File userSentDir = process.computer.fileSystem.RootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Sent");
+            File messageFile = File.CreateNewFile(userSentDir, $"{userSentDir.children.Count + 1}.json");
             messageFile.Content = messageObject.ToJObject().ToString();
             messageFile.OwnerId = 0;
             messageFile.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, true);
@@ -215,14 +215,14 @@ namespace HackLinks_Server.Computers.Processes {
             MailClient client = (MailClient)process;
             MailDaemon daemon = (MailDaemon)client.Daemon;
 
-            File mailFolder = process.computer.fileSystem.rootFile.GetFile("mail");
+            File mailFolder = process.computer.fileSystem.RootFile.GetFile("mail");
 
             string[] cmdArgs = command.Length > 1 ? command[1].Split(' ') : new string[] { };
             if (client.loggedInAccount == null) {
                 process.Print("You aren't logged in!");
                 return true;
             }
-            List<File> children = process.computer.fileSystem.rootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Inbox").children;
+            List<File> children = process.computer.fileSystem.RootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Inbox").children;
             if (children.Count == 0) {
                 process.Print("You have no messgaes!");
                 return true;
@@ -230,7 +230,7 @@ namespace HackLinks_Server.Computers.Processes {
             if (cmdArgs.Length != 1) {
                 string outputString = "Here are your ten most recent messages :\n";
                 int i = 0;
-                foreach (File message in process.computer.fileSystem.rootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Inbox").children) {
+                foreach (File message in process.computer.fileSystem.RootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Inbox").children) {
                     MailMessage messageObject = new MailMessage(message);
                     outputString += $"[{message.Name.Replace(".json", "")}] From {messageObject.From} At {messageObject.TimeSent}\n";
                     i++;
@@ -270,7 +270,7 @@ namespace HackLinks_Server.Computers.Processes {
             MailClient client = (MailClient)process;
             MailDaemon daemon = (MailDaemon)client.Daemon;
 
-            File mailFolder = process.computer.fileSystem.rootFile.GetFile("mail");
+            File mailFolder = process.computer.fileSystem.RootFile.GetFile("mail");
 
             if (command.Length < 2) {
                 process.Print("Usage : show [message ID]");
@@ -289,7 +289,7 @@ namespace HackLinks_Server.Computers.Processes {
                 process.Print("Please provide a proper message number");
                 return true;
             }
-            File message = process.computer.fileSystem.rootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Inbox/{number}.json");
+            File message = process.computer.fileSystem.RootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Inbox/{number}.json");
             if (message == null) {
                 process.Print("That message doesn't exist!");
                 return true;

@@ -28,9 +28,6 @@ namespace HackLinks_Server.Files
             // TODO other types 
         }
 
-        [Key] [Required] [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id { get;}
-
         [Required] [StringLength(255)] 
         [Index("uniquefiles",0,IsUnique = true)]
         public string Name { get; set; }
@@ -59,11 +56,11 @@ namespace HackLinks_Server.Files
 
         [Required]
         [Index("uniquefiles",1,IsUnique = true)]
-        private File ParentFile { get; }
+        private File ParentFile { get; set; }
 
 
         [Required] [Index("uniquefiles", 2, IsUnique = true)]
-        public Node Computer { get; }
+        public FileSystem FileSystem { get; }
 
         [Required]
         public FileType Type { get; set; } = FileType.Regular;
@@ -78,15 +75,16 @@ namespace HackLinks_Server.Files
         internal File Parent { get => ParentFile;
             set {
                 Parent?.children.RemoveAll(child => child.Equals(this));
+                value?.children.Add(this);
+                ParentFile = value;
             }
         }
-
+        
         public List<File> children = new List<File>();
 
-        protected File(int id, Node computer, File parent, string name)
+        protected File(FileSystem fs, File parent, string name)
         {
-            this.id = id;
-            this.Computer = computer;
+            this.FileSystem = fs;
             this.Name = name;
             this.Parent = parent;
             if(parent != null)
@@ -95,51 +93,7 @@ namespace HackLinks_Server.Files
             }
             Permissions = new FilePermissions(this);
         }
-
-        /// <summary>
-        /// Create a new file and register it a new file id with the given <see cref="FileSystemManager"/>
-        /// </summary>
-        /// <param name="manager"></param>
-        /// <param name="computer"></param>
-        /// <param name="parent"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static File CreateNewFile(FileSystemManager manager, Node computer, File parent, string name)
-        {
-            File newFile = new File(manager.GetNewFileId(), computer, parent, name);
-            manager.RegisterNewFile(newFile);
-            return newFile;
-        }
-
-        /// <summary>
-        /// Attempt to create a new file with the given id and register it with the given <see cref="FileSystemManager"/>
-        /// It's usually better to use <see cref="CreateNewFile(FileSystemManager, Node, File, string)"/> unless you need to explicitly specify the file id.
-        /// </summary>
-        /// <param name="manager"></param>
-        /// <param name="computer"></param>
-        /// <param name="parent"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">Thrown when the id is already registered</exception>
-        public static File CreateNewFile(int id, FileSystemManager manager, Node computer, File parent, string name)
-        {
-            if (manager.IsIdInUse(id))
-            {
-                throw new ArgumentException($"File id \"{id}\" is already in use");
-            }
-
-            File newFile = new File(id, computer, parent, name);
-            manager.RegisterNewFile(newFile);
-            return newFile;
-        }
-
-        public static File CreateNewFolder(FileSystemManager manager, Node computer, File parent, string name)
-        {
-            File newFile = new File(manager.GetNewFileId(), computer, parent, name);
-            newFile.Type = FileType.Directory;
-            manager.RegisterNewFile(newFile);
-            return newFile;
-        }
+        
 
         public bool HasExecutePermission(Credentials credentials)
         {
@@ -221,19 +175,19 @@ namespace HackLinks_Server.Files
         {
             Parent.children.Remove(this);
             Parent = null;
-            if (Type == FileType.LOG)
-            {
-                Log log = null;
-                foreach (var log2 in Computer.logs)
-                {
-                    if (log2.file == this)
-                    {
-                        log = log2;
-                        break;
-                    }
-                }
-                Computer.logs.Remove(log);
-            }
+//            if (Type == FileType.LOG)
+//            {
+//                Log log = null;
+//                foreach (var log2 in Computer.logs)
+//                {
+//                    if (log2.file == this)
+//                    {
+//                        log = log2;
+//                        break;
+//                    }
+//                }
+//                Computer.logs.Remove(log);
+//            }
         }
         
 
@@ -269,7 +223,7 @@ namespace HackLinks_Server.Files
         public void PrintFolderRecursive(int depth)
         {
             string tabs = new String(' ', depth);
-            Logger.Debug(tabs + id + "  d- " + Name);
+            Logger.Debug(tabs + "  d- " + Name);
             foreach (var item in children)
             {
                 if (item.IsFolder())
@@ -278,41 +232,55 @@ namespace HackLinks_Server.Files
                 }
                 else
                 {
-                    Logger.Debug(tabs + " " + item.id + "  f- " + item.Name);
+                    Logger.Debug(tabs + "  f- " + item.Name);
                 }
             }
         }
-        public static void CreateDefaults(Node n) {
-        }
 
-        private File(int id, String name, File parent, FileType type, string content, Node computer, int groupId, int permissions, int ownerId) {
-            
+        private File(String name,FileSystem fileSystem, FileType type, string content, int groupId, int permissions, int ownerId) {
+            this.Parent = null;
+            this.Type = type;
+            this.Content = content;
+            this.FileSystem = fileSystem;
+            this.groupId = groupId;
+            this.OwnerId = ownerId;
+            this.Permissions = FilePermissions.FromDigit(this,permissions);
         }
         
         public File MkDir(string name, int ownerid = 0 ,int permissions = 774,int groupId = 0)
         {
-            return new File(name,this,FileType.Directory,"",this.Computer,groupId,permissions,ownerid);
+            File child = new File(name,this,FileType.Directory,"",groupId,permissions,ownerid);
+            this.children.Add(child);
+            return child;
         }
         
         public File MkFile(string name,string content = "", int ownerid = 0 ,int permissions = 774,int groupId = 0)
         {
-            return new File(name,this,FileType.Regular,content,this.Computer,groupId,permissions,ownerid);
+            File child = new File(name,this,FileType.Regular,content,groupId,permissions,ownerid);
+            this.children.Add(child);
+            return child;
         }
         
-        private File(String name, File parent, FileType type, string content, Node computer, int groupId, int permissions, int ownerId) {
-            this.id = computer.fileSystem.fileSystemManager.GetNewFileId();
+        private File(String name, File parent, FileType type, string content, int groupId, int permissions, int ownerId) {
             this.Parent = parent;
             this.Type = type;
             this.Content = content;
-            this.Computer = computer;
+            this.FileSystem = parent.FileSystem;
             this.groupId = groupId;
             this.OwnerId = ownerId;
             this.Permissions = FilePermissions.FromDigit(this,permissions);
-            computer.fileSystem.fileSystemManager.RegisterNewFile(this);
         }
 
-        public static File GetRoot(Node node) {
-            return new File("",null,FileType.Directory,"",node,0,774,0);
+        public static File GetRoot(FileSystem fs) {
+            return new File("",fs,FileType.Directory,"",0,774,0);
+        }
+
+        public static File CreateNewFile(File parent, string filename, string content = "") {
+            return parent.MkFile(filename, content);
+        }
+
+        public static File CreateNewFolder( File parent, string name) {
+            return parent.MkDir(name);
         }
     }
 }

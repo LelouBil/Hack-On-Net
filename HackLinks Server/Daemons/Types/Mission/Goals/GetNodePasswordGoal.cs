@@ -24,7 +24,7 @@ namespace HackLinks_Server.Daemons.Types.Mission.Goals
         public override bool IsComplete(string additionalInformation)
         {
             Node computer = Server.Instance.GetComputerManager().GetNodeByIp(ip);
-            var configFolder = computer.fileSystem.rootFile.GetFile("etc");
+            var configFolder = computer.fileSystem.RootFile.GetFile("etc");
             if (configFolder == null || !configFolder.IsFolder())
                 return true;
             File usersFile = configFolder.GetFile("passwd");

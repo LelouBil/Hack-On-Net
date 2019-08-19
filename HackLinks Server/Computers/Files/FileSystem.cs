@@ -1,6 +1,7 @@
 ﻿using HackLinks_Server.Files;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,24 +14,22 @@ namespace HackLinks_Server.Computers.Files
     /// </summary>
     public class FileSystem
     {
-        public readonly FileSystemManager fileSystemManager;
 
-        public File rootFile;
+        [Required]
+        public File RootFile;
 
-        private Node node;
 
-        public FileSystem(FileSystemManager fileSystemManager,Node n)
+        public FileSystem()
         {
-            this.fileSystemManager = fileSystemManager;
-            this.node = n;
-            this.rootFile = fileSystemManager.CreateRootFile(n);
+            this.RootFile = File.GetRoot(this);
             SetupDefaults();
+            
         }
 
         private void SetupDefaults() {
-            File etc = rootFile.MkDir("etc");
-            File bin = rootFile.MkDir("bin");
-            File daemons = rootFile.MkDir("daemons");
+            File etc = RootFile.MkDir("etc");
+            File bin = RootFile.MkDir("bin");
+            File daemons = RootFile.MkDir("daemons");
             etc.MkFile("passwd", groupId: 1,
                 content:
                 Node.DefaultPasswd);
@@ -50,20 +49,6 @@ namespace HackLinks_Server.Computers.Files
             bin.MkFile("cadmin", "computeradmin");
             bin.MkFile("hash", "hash");
         }
-
-        public File CreateFile(Node computer, File parent, string fileName)
-        {
-            return File.CreateNewFile(fileSystemManager, computer, parent, fileName);
-        }
-
-        public File CreateFile(int id, Node computer, File parent, string fileName)
-        {
-            return File.CreateNewFile(id, fileSystemManager, computer, parent, fileName);
-        }
-
-        public File CreateFolder(Node computer, File parent, string fileName)
-        {
-            return File.CreateNewFolder(fileSystemManager, computer, parent, fileName);
-        }
+        
     }
 }

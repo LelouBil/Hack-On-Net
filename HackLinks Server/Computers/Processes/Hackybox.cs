@@ -383,7 +383,7 @@ namespace HackLinks_Server.Computers.Processes
 
         public static bool Ls(CommandProcess process, string[] command)
         {
-            File root = process.computer.fileSystem.rootFile;
+            File root = process.computer.fileSystem.RootFile;
             if (command.Length == 2)
             {
                 foreach (File file in process.ActiveDirectory.children)
@@ -440,7 +440,7 @@ namespace HackLinks_Server.Computers.Processes
                 return true;
             }
 
-            File file = process.computer.fileSystem.CreateFile(process.computer, activeDirectory, command[1]);
+            File file = activeDirectory.MkFile(command[1]);
             file.OwnerId = process.Credentials.UserId;
             file.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, false);
             file.Permissions.SetPermission(FilePermissions.PermissionType.Group, true, true, false);
@@ -505,7 +505,7 @@ namespace HackLinks_Server.Computers.Processes
                 return true;
             }
 
-            File file = process.computer.fileSystem.CreateFolder(process.computer, activeDirectory, command[1]);
+            File file = activeDirectory.MkDir(command[1]);
             file.OwnerId = process.Credentials.UserId;
             file.Permissions.SetPermission(FilePermissions.PermissionType.User, true, true, true);
             file.Permissions.SetPermission(FilePermissions.PermissionType.Group, true, true, true);

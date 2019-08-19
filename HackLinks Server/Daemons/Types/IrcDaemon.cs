@@ -40,7 +40,7 @@ namespace HackLinks_Server.Daemons.Types
                 commandData.AddRange(new string[] { message.author, message.content });
             }
             connectSession.owner.Send(PacketType.KERNL, commandData.ToArray());
-            SendMessage(new IrcMessage("ChanBot", connectSession.owner.username + " just logged in !"));
+            SendMessage(new IrcMessage("ChanBot", connectSession.owner.account.username + " just logged in !"));
         }
 
         public override void OnDisconnect(Session disconnectSession)

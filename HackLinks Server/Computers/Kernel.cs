@@ -69,7 +69,7 @@ namespace HackLinks_Server.Computers
                     resultIP = client.homeComputer.ip;
                 else
                 {
-                    var DNSConfigFile = client.homeComputer.fileSystem.rootFile.GetFileAtPath("/cfg/dns.cfg");
+                    var DNSConfigFile = client.homeComputer.fileSystem.RootFile.GetFileAtPath("/cfg/dns.cfg");
                     if (DNSConfigFile != null)
                     {
                         foreach (string ip in DNSConfigFile.Content.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries))
@@ -166,7 +166,7 @@ namespace HackLinks_Server.Computers
 
         public void AddNodeToNetMap(Process process, string ip, string x, string y)
         {
-            Server.Instance.DatabaseLink.AddUserNode(process.computer.GetSession(process.ProcessId).owner.username, ip, x + ":" + y);
+            Server.Instance.DatabaseLink.AddUserNode(process.computer.GetSession(process.ProcessId).owner.account, ip, x + ":" + y);
             GetClient(process).Send(NetUtil.PacketType.KERNL, "nmap", ip, x, y);
         }
 
@@ -187,7 +187,7 @@ namespace HackLinks_Server.Computers
 
         public List<Account> GetAccounts()
         {
-            return Account.FromFile(node.fileSystem.rootFile.GetFileAtPath("etc/passwd"), node);
+            return Account.FromFile(node.fileSystem.RootFile.GetFileAtPath("etc/passwd"), node);
         }
     }
 }

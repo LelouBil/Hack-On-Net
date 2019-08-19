@@ -41,7 +41,7 @@ namespace HackLinks_Server.Computers.Processes
             BankClient client = (BankClient)process;
             BankDaemon daemon = (BankDaemon)client.Daemon;
 
-            var bankFolder = process.computer.fileSystem.rootFile.GetFile("bank");
+            var bankFolder = process.computer.fileSystem.RootFile.GetFile("bank");
             var accountFile = bankFolder.GetFile("accounts.db");
 
             if (command[0] == "account")
@@ -94,7 +94,7 @@ namespace HackLinks_Server.Computers.Processes
                         process.Print("This account name is not available");
                         return true;
                     }
-                    daemon.accounts.Add(new BankAccount(cmdArgs[1], 0, cmdArgs[3], client.Session.owner.username, cmdArgs[2]));
+                    daemon.accounts.Add(new BankAccount(cmdArgs[1], 0, cmdArgs[3], client.Session.owner.account, cmdArgs[2]));
                     daemon.UpdateAccountDatabase();
                     process.Print("Your account has been opened. Use account login [accountname] [password] to login.");
                 }
@@ -343,7 +343,7 @@ namespace HackLinks_Server.Computers.Processes
                     {
                         account.balance = val;
                         daemon.UpdateAccountDatabase();
-                        var bankFolder = process.computer.fileSystem.rootFile.GetFile("bank");
+                        var bankFolder = process.computer.fileSystem.RootFile.GetFile("bank");
                         daemon.LogTransaction($"{account.accountName},CHEATED Balance set to {val}", client.Session.sessionId, client.Session.owner.homeComputer.ip);
                     }
                     else

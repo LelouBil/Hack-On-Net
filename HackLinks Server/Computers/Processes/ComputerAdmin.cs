@@ -53,8 +53,8 @@ namespace HackLinks_Server.Computers.Processes
         private static bool EditUser(CommandProcess process, string[] command)
         {
             if (command.Length == 1) return false;
-            File groupsFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("group");
-            File usersFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("passwd");
+            File groupsFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("group");
+            File usersFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("passwd");
             if (!groupsFile.HasWritePermission(process.Credentials) && !usersFile.HasWritePermission(process.Credentials))
             {
                 process.Print("You do not have the required permissions");
@@ -121,8 +121,8 @@ namespace HackLinks_Server.Computers.Processes
             if (cmdArgs.Length != 2) return false;
             string username = cmdArgs[0];
             string groupname = cmdArgs[1];
-            File groupsFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("group");
-            File usersFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("passwd");
+            File groupsFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("group");
+            File usersFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("passwd");
             if (!groupsFile.HasWritePermission(process.Credentials) && !usersFile.HasWritePermission(process.Credentials))
             {
                 process.Print("You do not have the required permissions");
@@ -155,8 +155,8 @@ namespace HackLinks_Server.Computers.Processes
             var cmdArgs = command[1].Split(' ');
             if (cmdArgs.Length < 3 || cmdArgs.Length > 7) return false;
             
-            File groupsFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("group");
-            File usersFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("passwd");
+            File groupsFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("group");
+            File usersFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("passwd");
             if (!groupsFile.HasWritePermission(process.Credentials) && !usersFile.HasWritePermission(process.Credentials))
             {
                 process.Print("You do not have the required permissions");
@@ -187,11 +187,11 @@ namespace HackLinks_Server.Computers.Processes
                 return true;
             }
 
-            if (computer.fileSystem.rootFile.GetFileAtPath(homepath) == null)
+            if (computer.fileSystem.RootFile.GetFileAtPath(homepath) == null)
             {
                 //TODO create home directory
             }
-            if (computer.fileSystem.rootFile.GetFileAtPath(defaultprocessPath) == null)
+            if (computer.fileSystem.RootFile.GetFileAtPath(defaultprocessPath) == null)
             {
                 process.Print("The default process's file doesn't exists !");
                 return true;
@@ -209,7 +209,7 @@ namespace HackLinks_Server.Computers.Processes
             if (command.Length == 1) return false;
             var cmdArgs = command[1].Split(' ');
             if (cmdArgs.Length != 1) return false;
-            File usersFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("passwd");
+            File usersFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("passwd");
             if (!usersFile.HasReadPermission(process.Credentials))
             {
                 process.Print("You do not have the required permissions");
@@ -241,8 +241,8 @@ namespace HackLinks_Server.Computers.Processes
             if (command.Length == 1) return false;
             var cmdArgs = command[1].Split(' ');
             if (cmdArgs.Length != 1) return false;
-            File groupsFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("group");
-            File usersFile = process.computer.fileSystem.rootFile.GetFile("etc").GetFile("passwd");
+            File groupsFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("group");
+            File usersFile = process.computer.fileSystem.RootFile.GetFile("etc").GetFile("passwd");
             if (!groupsFile.HasWritePermission(process.Credentials) && !usersFile.HasWritePermission(process.Credentials))
             {
                 process.Print("You do not have the required permissions");

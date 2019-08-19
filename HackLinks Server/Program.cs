@@ -169,7 +169,7 @@ namespace HackLinks_Server
                     if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - previousUploadTime > configData.SaveFrequency)
                     {
                         previousUploadTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                        Server.Instance.SaveDatabase();
+//                        Server.Instance.SaveDatabase();
                     }
                 }
 

@@ -36,8 +36,8 @@ namespace HackLinks_Server.Computers.Permissions
             HomeString = accountData[5];
             DPString = accountData[6];
             Computer = node;
-            HomeDirectory = Computer.fileSystem.rootFile.GetFileAtPath(HomeString);
-            DefaultProcess = Computer.fileSystem.rootFile.GetFileAtPath(DPString);
+            HomeDirectory = Computer.fileSystem.RootFile.GetFileAtPath(HomeString);
+            DefaultProcess = Computer.fileSystem.RootFile.GetFileAtPath(DPString);
 
         }
 
@@ -50,8 +50,8 @@ namespace HackLinks_Server.Computers.Permissions
             GroupId = groupId;
             Info = info;
             Computer = computer;
-            HomeDirectory = Computer.fileSystem.rootFile.GetFileAtPath(homeString);
-            DefaultProcess = Computer.fileSystem.rootFile.GetFileAtPath(dpString);
+            HomeDirectory = Computer.fileSystem.RootFile.GetFileAtPath(homeString);
+            DefaultProcess = Computer.fileSystem.RootFile.GetFileAtPath(dpString);
         }
 
         public Account(string username, string password,Group group,string info,string homeString, string dpString, Node computer)
@@ -62,8 +62,8 @@ namespace HackLinks_Server.Computers.Permissions
             Info = info;
             HomeString = homeString;
             DPString = dpString;
-            HomeDirectory = computer.fileSystem.rootFile.GetFileAtPath(homeString);
-            DefaultProcess = computer.fileSystem.rootFile.GetFileAtPath(dpString);
+            HomeDirectory = computer.fileSystem.RootFile.GetFileAtPath(homeString);
+            DefaultProcess = computer.fileSystem.RootFile.GetFileAtPath(dpString);
             Computer = computer;
         }
 
@@ -112,7 +112,7 @@ namespace HackLinks_Server.Computers.Permissions
 
         public void ApplyChanges()
         {
-            File passwd = Computer.fileSystem.rootFile.GetFileAtPath("etc/passwd");
+            File passwd = Computer.fileSystem.RootFile.GetFileAtPath("etc/passwd");
             string[] accounts = passwd.Content.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             if (UserId == -1)
             {

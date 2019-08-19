@@ -75,10 +75,10 @@ namespace HackLinks_Server.Computers.Processes {
                         process.Print("Missing arguments.\nProper usage: dns assign [IP] [URL]");
                         return true;
                     }
-                    File dnsFolder = process.computer.fileSystem.rootFile.GetFile("dns");
+                    File dnsFolder = process.computer.fileSystem.RootFile.GetFile("dns");
                     if (dnsFolder == null)
                     {
-                        dnsFolder = process.computer.fileSystem.CreateFile(daemon.computer, process.computer.fileSystem.rootFile, "dns");
+                        dnsFolder = process.computer.fileSystem.RootFile.MkDir("dns");
                         dnsFolder.OwnerId = 0; // root
                         dnsFolder.Type = File.FileType.Directory;
                     }
@@ -90,7 +90,7 @@ namespace HackLinks_Server.Computers.Processes {
                     File dnsEntries = dnsFolder.GetFile("entries.db");
                     if (dnsEntries == null)
                     {
-                        dnsEntries = process.computer.fileSystem.CreateFile(process.computer, dnsFolder, "entries.db");
+                        dnsEntries = dnsFolder.MkFile("entries.db");
                         dnsEntries.OwnerId = 0; // root
                         dnsEntries.Permissions.SetPermission(FilePermissions.PermissionType.Group, true, true, true);
                         dnsEntries.Group = Group.ADMIN;
@@ -98,7 +98,7 @@ namespace HackLinks_Server.Computers.Processes {
                     else if (dnsEntries.IsFolder())
                     {
                         dnsEntries.RemoveFile();
-                        dnsEntries = process.computer.fileSystem.CreateFile(process.computer, dnsFolder, "entries.db");
+                        dnsEntries = dnsFolder.MkFile("entries.db");
                         dnsEntries.OwnerId = 0; // root
                         dnsEntries.Permissions.SetPermission(FilePermissions.PermissionType.Group, true, true, true);
                         dnsEntries.Group = Group.ADMIN;

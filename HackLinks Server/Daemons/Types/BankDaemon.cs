@@ -36,7 +36,7 @@ namespace HackLinks_Server.Daemons.Types
         public void LoadAccounts()
         {
             accounts.Clear();
-            File accountFile = node.fileSystem.rootFile.GetFileAtPath("/bank/accounts.db");
+            File accountFile = node.fileSystem.RootFile.GetFileAtPath("/bank/accounts.db");
             if (accountFile == null)
                 return;
             foreach (string line in accountFile.Content.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries))
@@ -44,19 +44,19 @@ namespace HackLinks_Server.Daemons.Types
                 var data = line.Split(',');
                 if (data.Length < 4)
                     continue;
-                accounts.Add(new BankAccount(data[0], Convert.ToInt32(data[1]), data[2], data[3], data[4]));
+                accounts.Add(new BankAccount(data[0], Convert.ToInt32(data[1]), data[2], Server.Instance.DatabaseLink.ServerAccounts.Find(data[3]), data[4]));
             }
         }
 
         public void UpdateAccountDatabase()
         {
-            File accountFile = node.fileSystem.rootFile.GetFileAtPath("/bank/accounts.db");
+            File accountFile = node.fileSystem.RootFile.GetFileAtPath("/bank/accounts.db");
             if (accountFile == null)
                 return;
             string newAccountsFile = "";
             foreach (var account in accounts)
             {
-                newAccountsFile += account.accountName + "," + 0 + "," + account.password + "," + account.clientUsername + "," + account.email + "\r\n";
+                newAccountsFile += account.accountName + "," + 0 + "," + account.password + "," + account.client.username + "," + account.email + "\r\n";
 
             }
             accountFile.Content = newAccountsFile;
@@ -64,7 +64,7 @@ namespace HackLinks_Server.Daemons.Types
 
         public bool CheckFolders(CommandProcess process)
         {
-            var bankFolder = process.computer.fileSystem.rootFile.GetFile("bank");
+            var bankFolder = process.computer.fileSystem.RootFile.GetFile("bank");
             if (bankFolder == null || !bankFolder.IsFolder())
             {
                 process.Print("No bank daemon folder was found ! (Contact the admin of this node to create one as the bank is useless without one)");
@@ -92,13 +92,13 @@ namespace HackLinks_Server.Daemons.Types
             }
             account.balance += amount;
             UpdateAccountDatabase();
-            var bankFolder = computer.fileSystem.rootFile.GetFile("bank");
+            var bankFolder = computer.fileSystem.RootFile.GetFile("bank");
             LogTransaction($"{to.accountName},Received {amount} from {from.accountName}@{ip} to {to.accountName}", session.sessionId, session.owner.homeComputer.ip);
         }
 
         public void LogTransaction(string transactionMessage, int sessionId, string ip)
         {
-            var bankFolder = computer.fileSystem.rootFile.GetFile("bank");
+            var bankFolder = computer.fileSystem.RootFile.GetFile("bank");
             File transactionLog = bankFolder.GetFile("transactionlog.db");
             if (transactionLog != null)
             {

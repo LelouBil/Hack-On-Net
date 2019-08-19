@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HackLinks_Server.Computers.DataObjects;
 
 namespace HackLinks_Server.Computers.Processes
 {
@@ -135,40 +136,38 @@ namespace HackLinks_Server.Computers.Processes
                 client.Send(NetUtil.PacketType.MESSG, "Usage: giveperms [username] [admin/kick/ban/giveperms]");
                 return true;
             }
-            if (!Server.Instance.DatabaseLink.GetUsersInDatabase().ContainsValue(command[1]))
+            if (!Server.Instance.DatabaseLink.ServerAccounts.Any(a => a.username == command[1]))
             {
                 client.Send(NetUtil.PacketType.MESSG, "User does not exist in the user database");
                 return true;
             }
 
-            List<HackLinks_Server.Permissions> permissions = Server.Instance.DatabaseLink.GetUserPermissions()[command[1]];
+            ServerAccount acc = Server.Instance.DatabaseLink.ServerAccounts.Find(command[1]);
 
 
             if (command[2] == "admin")
             {
-                permissions.Add(HackLinks_Server.Permissions.Admin);
+                acc.permissions.Add(HackLinks_Server.Permissions.Admin);
             }
             if (command[2] == "kick")
             {
-                permissions.Add(HackLinks_Server.Permissions.Kick);
+                acc.permissions.Add(HackLinks_Server.Permissions.Kick);
             }
             if (command[2] == "ban")
             {
-                permissions.Add(HackLinks_Server.Permissions.Ban);
+                acc.permissions.Add(HackLinks_Server.Permissions.Ban);
             }
             if (command[2] == "giveperms")
             {
-                permissions.Add(HackLinks_Server.Permissions.GivePerms);
+                acc.permissions.Add(HackLinks_Server.Permissions.GivePerms);
             }
-            Server.Instance.DatabaseLink.SetUserPermissions(command[1], permissions);
             foreach (var client2 in Server.Instance.clients)
             {
-                if (client2.username == command[1])
+                if (client2.account.username == command[1])
                 {
                     client = client2;
                 }
             }
-            client.permissions = permissions;
             return true;
         }
 
@@ -189,7 +188,7 @@ namespace HackLinks_Server.Computers.Processes
             GameClient targetClient = null;
             foreach (var client2 in Server.Instance.clients)
             {
-                if (client2.username == command[1])
+                if (client2.account.username == command[1])
                 {
                     targetClient = client2;
                     break;

@@ -12,6 +12,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using HackLinks_Server.Computers.DataObjects;
 using HackLinks_Server.Util;
 using static HackLinksCommon.NetUtil;
 
@@ -23,10 +24,10 @@ namespace HackLinks_Server
         public Socket client;
         public Server server;
 
-        public string username = "";
+        public ServerAccount account;
 
         public Session activeSession;
-        public List<Permissions> permissions =  new List<Permissions>();
+        public List<Permissions> permissions => account.permissions;
         public Node homeComputer;
 
         public string buffer = "";
@@ -56,7 +57,7 @@ namespace HackLinks_Server
 
         public void Login(Node node, Credentials credentials)
         {
-            Send(PacketType.KERNL, "login", ((int)credentials.Group).ToString(), username);
+            Send(PacketType.KERNL, "login", ((int)credentials.Group).ToString(), account.username);
 
             // TODO query passwd for shell
             Process process = CreateProcess(node, "HASH", credentials, (Process.Printer)(input => Send(PacketType.MESSG, input)));

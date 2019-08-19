@@ -47,7 +47,7 @@ namespace HackLinks_Server.Computers.Processes
             {
                 return file;
             }
-            File bin = computer.fileSystem.rootFile.GetFile("bin");
+            File bin = computer.fileSystem.RootFile.GetFile("bin");
             if(bin != null)
             {
                 file = bin.GetFile(v);

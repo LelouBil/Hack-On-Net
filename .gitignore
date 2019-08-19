@@ -269,6 +269,7 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+Hacklinks Server/bin
 
 # CodeRush
 .cr/

@@ -27,7 +27,6 @@ namespace HackLinks_Server.Computers
             this.logEvent = logEvent;
             this.message = message;
             file.Content = "####!!*MACHINE READABLE####!!*\n" + SerializeLog(this);
-            file.Dirty = true;
         }
 
         public Log(File file, int sessionId, string ip, LogEvents logEvent, string message, string messageExtended)
@@ -39,7 +38,6 @@ namespace HackLinks_Server.Computers
             this.message = message;
             this.messageExtended = messageExtended;
             file.Content = messageExtended + "\n\n####!!*MACHINE READABLE####!!*" + SerializeLog(this);
-            file.Dirty = true;
         }
         
         [JsonConstructor()]

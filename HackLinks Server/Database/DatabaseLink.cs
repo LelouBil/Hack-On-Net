@@ -4,28 +4,52 @@ using HackLinks_Server.Files;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Data.Entity;
+using System.Data.Entity.Core.EntityClient;
+using System.Data.SqlClient;
+using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HackLinks_Server.Computers.DataObjects;
 using HackLinks_Server.Util;
 
-namespace HackLinks_Server.Database
-{
-    public class DatabaseLink
-    {
-        private MySqlConnectionStringBuilder connectionStringBuilder = new MySqlConnectionStringBuilder();
+namespace HackLinks_Server.Database {
+    public class DatabaseLink : DbContext {
+        private const string dbpath = ".\\database.db";
 
-        public DatabaseLink(ConfigUtil.ConfigData config)
-        {
-            SetConnectionStringParameters(config);
-        }
+        public DbSet<Binary> Binaries { get; set; }
+        public DbSet<Computer> Computers { get; set; }
+        public DbSet<DataFile> DataFiles { get; set; }
+        public DbSet<ServerAccount> ServerAccounts { get; set; }
 
-        public void SetConnectionStringParameters(ConfigUtil.ConfigData config)
-        {
-            connectionStringBuilder.Server = config.MySQLServer;
-            connectionStringBuilder.Database = config.Database;
-            connectionStringBuilder.UserID = config.UserID;
-            connectionStringBuilder.Password = config.Password;
+
+        public DatabaseLink(ConfigUtil.ConfigData config) : base(GetConnectionString(config)) { }
+
+        private static string GetConnectionString(ConfigUtil.ConfigData config) {
+            DbConnectionStringBuilder connectionStringBuilder;
+            string provider;
+            if (config.Sqlite) {
+                var sqlitecn = new SQLiteConnectionStringBuilder();
+                provider = "System.Data.SQLite.EF6";
+                sqlitecn.DataSource = dbpath;
+                connectionStringBuilder = sqlitecn;
+            }
+            else {
+                var sqlcn = new MySqlConnectionStringBuilder();
+                provider = "MySql.Data.MySqlClient";
+                sqlcn.Server = config.MySQLServer;
+                sqlcn.Database = config.Database;
+                sqlcn.UserID = config.UserID;
+                sqlcn.Password = config.Password;
+                connectionStringBuilder = sqlcn;
+            }
+
+            var ent = new EntityConnectionStringBuilder();
+            ent.Provider = provider;
+            ent.ProviderConnectionString = connectionStringBuilder.ConnectionString;
+            return ent.ConnectionString;
         }
 
         public string GetConnectionString()
@@ -490,55 +514,5 @@ namespace HackLinks_Server.Database
             Logger.Info("Finished Rebuilding Database");
         }
 
-        private bool UpdateDbFile(File child, MySqlConnection conn)
-        {
-            MySqlCommand fileCommand = new MySqlCommand(
-                "INSERT INTO files" +
-                " (id, name, parentFile, type, specialType, content, computerId, owner, groupId, permissions)" +
-                " VALUES" +
-                " (@id, @name, @parentFile, @type, @specialType, @content, @computerId, @owner, @groupId, @permissions)" +
-                " ON DUPLICATE KEY UPDATE" +
-                " name = @name," +
-                " parentFile = @parentFile," +
-                " specialType = @specialType," +
-                " content = @content," +
-                " groupId = @groupId," +
-                " permissions = @permissions," +
-                " owner = @owner"
-                , conn);
-            fileCommand.Parameters.AddRange(new MySqlParameter[] {
-                        new MySqlParameter("id", child.id),
-                        new MySqlParameter("name", child.Name),
-                        new MySqlParameter("parentFile", child.ParentId),
-                        new MySqlParameter("type", child.isFolder ? 1 : 0),
-                        new MySqlParameter("specialType", child.Type),
-                        new MySqlParameter("content", child.Content),
-                        new MySqlParameter("computerId", child.computerId),
-                        new MySqlParameter("groupId", child.Group),
-                        new MySqlParameter("permissions", child.Permissions.PermissionValue),
-                        new MySqlParameter("owner", child.OwnerId),
-                    });
-
-            int res = fileCommand.ExecuteNonQuery();
-
-            int insertedId = (int)fileCommand.LastInsertedId;
-
-            return res > 0;
-        }
-
-        private bool DeleteDbFile(File file, MySqlConnection conn)
-        {
-            MySqlCommand fileCommand = new MySqlCommand(
-            "DELETE FROM files" +
-            " WHERE" +
-            " id = @id"
-            , conn);
-
-            fileCommand.Parameters.AddRange(new MySqlParameter[] {
-                        new MySqlParameter("id", file.id),
-                    });
-
-            return fileCommand.ExecuteNonQuery() > 0;
-        }
     }
 }

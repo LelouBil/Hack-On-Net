@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Mono.Options;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using HackLinks_Server.Util;
 
 namespace HackLinks_Server
@@ -25,12 +26,12 @@ namespace HackLinks_Server
             Logger.Archive = $".{Path.DirectorySeparatorChar}Archive";
 
             Logger.Info("HackLinks Server is starting up.");
-
+            string BasePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             bool showHelp = false;
-            bool rebuildDB = false;
-            bool writeConfig = false;
+            bool rebuildDB = true;
+            bool writeConfig = true;
             bool overwriteConfig = false;
-            string writeConfigPath = null;
+            string writeConfigPath = BasePath + "\\test.cfg";
 
             //Set Defaults and create config object
             ConfigUtil.ConfigData configData = new ConfigUtil.ConfigData();
@@ -39,6 +40,7 @@ namespace HackLinks_Server
             configData.Database = "hacklinks";
             configData.UserID = "root";
             configData.Password = "";
+            configData.Sqlite = true;
             configData.SaveFrequency = 300; // 300 seconds, 60 seconds * 5, 5 minutes.
 
             bool passSet = true;

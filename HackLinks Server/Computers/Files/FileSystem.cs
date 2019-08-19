@@ -16,9 +16,10 @@ namespace HackLinks_Server.Computers.Files
 
         public File rootFile;
 
-        public FileSystem(FileSystemManager fileSystemManager)
+        public FileSystem(FileSystemManager fileSystemManager,Node n)
         {
             this.fileSystemManager = fileSystemManager;
+            this.rootFile = fileSystemManager.CreateRootFile(n);
         }
 
         public File CreateFile(Node computer, File parent, string fileName)

@@ -7,9 +7,12 @@ using HackLinks_Server.Files;
 using HackLinksCommon;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HackLinks_Server.Computers.DataObjects;
 
 namespace HackLinks_Server.Computers
 {
@@ -17,10 +20,18 @@ namespace HackLinks_Server.Computers
     {
         public static string SERVER_CONFIG_PATH = "/cfg/server.cfg";
 
-        public int id;
-        public string ip;
+        [Key] [Required] [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int id { get; set; }
+        
+        [Index] [Required] [StringLength(15)]
+        public string ip { get; set; }
 
-        public int ownerId;
+        [Required] 
+        public ServerAccount owner { get; set; }
+        
+        [Required]
+        public int type { get; set; }
+        
 
         public readonly FileSystem fileSystem = new FileSystem(Server.Instance.FileSystemManager);
 

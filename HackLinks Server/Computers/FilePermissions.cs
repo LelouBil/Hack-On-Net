@@ -28,7 +28,7 @@ namespace HackLinks_Server.Computers
         private File file;
 
         private int permissionValue = 0;
-        public int PermissionValue { get => permissionValue; set { permissionValue = value; file.Dirty = true; } }
+        public int PermissionValue { get; set; }
 
         public int Owner { get => GetPermissionDigit(PermissionType.User); set => SetPermission(PermissionType.User, value); }
         public int Group { get => GetPermissionDigit(PermissionType.Group); set => SetPermission(PermissionType.Group, value); }
@@ -84,6 +84,12 @@ namespace HackLinks_Server.Computers
         public bool CheckPermissionDigit(PermissionType type, int value)
         {
             return (GetPermissionDigit(type) & value) == value;
+        }
+
+        public static FilePermissions FromDigit(File f,int permissions) {
+            return new FilePermissions(f) {
+                permissionValue = permissions
+            };
         }
     }
 }

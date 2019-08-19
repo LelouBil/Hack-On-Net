@@ -82,7 +82,7 @@ namespace HackLinks_Server.Computers
                 File parent = fileQueue.Dequeue();
                 Logger.Info($"Processing File {parent.Name} {parent.id}");
 
-                foreach (File child in files.Where(x => x.ParentId.Equals(parent.id)))
+                foreach (File child in files.Where(x => x.Parent.Equals(parent)))
                 {
                     Logger.Info($"Processing Child File {child.Name} {child.id} of {parent.Name} {parent.id}");
 

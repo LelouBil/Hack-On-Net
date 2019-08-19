@@ -431,7 +431,6 @@ namespace HackLinks_Server.Computers.Processes
                 if (fileC.Name == command[1])
                 {
                     process.Print("File " + command[1] + " touched.");
-                    fileC.Dirty = true;
                     return true;
                 }
             }

@@ -80,7 +80,7 @@ namespace HackLinks_Server.Computers.Processes {
                     {
                         dnsFolder = process.computer.fileSystem.CreateFile(daemon.computer, process.computer.fileSystem.rootFile, "dns");
                         dnsFolder.OwnerId = 0; // root
-                        dnsFolder.isFolder = true;
+                        dnsFolder.Type = File.FileType.Directory;
                     }
                     else
                     {

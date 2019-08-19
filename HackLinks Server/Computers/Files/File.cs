@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HackLinks_Server.Computers;
+using HackLinks_Server.Computers.DataObjects;
 using HackLinks_Server.Computers.Files;
 using HackLinks_Server.Computers.Permissions;
 using HackLinks_Server.Computers.Processes;
@@ -25,60 +28,65 @@ namespace HackLinks_Server.Files
             // TODO other types 
         }
 
-        public readonly int id;
+        [Key] [Required] [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int id { get;}
 
-        private string name;
-        private int ownerId;
-        private Group group;
-        private string content = "";
+        [Required] [StringLength(255)] 
+        [Index("uniquefiles",0,IsUnique = true)]
+        public string Name { get; set; }
+        
+        
+        [Required]
+        public int OwnerId { get; set; }
 
-        private File parent;
-        private int parentId;
-        public int computerId;
+        [Required]
+        public int groupId { get; }
+        
+        public Group Group {
+            get => (Group) groupId;
+            set => throw new NotImplementedException();
+        }
 
-        private FileType type = FileType.Regular;
+        [Required] public string content { get; set; } // TODO make hash function portable/low collision eg. https://softwareengineering.stackexchange.com/questions/49550/which-hashing-algorithm-is-best-for-uniqueness-and-speed
 
-        public bool Dirty { get; set; }
+        public string Content {
+            get => content;
+            set {
+                content = value;
+                Checksum = content.GetHashCode();
+            }
+        }
 
-        public string Name { get => name; set { name = value; Dirty = true; } }
+        [Required]
+        [Index("uniquefiles",1,IsUnique = true)]
+        private File ParentFile { get; }
 
+
+        [Required] [Index("uniquefiles", 2, IsUnique = true)]
+        public Node Computer { get; }
+
+        [Required]
+        public FileType Type { get; set; } = FileType.Regular;
+
+        [Required]
         public FilePermissions Permissions { get; set; }
-
-        public int OwnerId { get => ownerId; set { ownerId = value; Dirty = true; } }
-
-        public Group Group { get => group; set { group = value; Dirty = true; } }
-
-        public string Content { get => content; set { content = value; Dirty = true; Checksum = content.GetHashCode(); } } // TODO make hash function portable/low collision eg. https://softwareengineering.stackexchange.com/questions/49550/which-hashing-algorithm-is-best-for-uniqueness-and-speed
+        
+        
         public int Checksum { get; private set; }
-
-        public int ParentId { get => parentId; set { parentId = value; Dirty = true; } }
-        public int ComputerId { get => computerId; set { computerId = value; Dirty = true; } }
-
-        public FileType Type { get => type; set { type = value; Dirty = true; } }
-
-        internal File Parent { get => parent;
-            set
-            {
-                if (parent != null)
-                {
-                    parent.children.RemoveAll(child => child.id == id);
-                }
-
-                parent = value;
-                if(parent != null)
-                {
-                    ParentId = parent.id;
-                }
+        
+        
+        internal File Parent { get => ParentFile;
+            set {
+                Parent?.children.RemoveAll(child => child.Equals(this));
             }
         }
 
         public List<File> children = new List<File>();
-        internal bool isFolder;
 
         protected File(int id, Node computer, File parent, string name)
         {
             this.id = id;
-            this.computerId = computer.id;
+            this.Computer = computer;
             this.Name = name;
             this.Parent = parent;
             if(parent != null)
@@ -128,7 +136,7 @@ namespace HackLinks_Server.Files
         public static File CreateNewFolder(FileSystemManager manager, Node computer, File parent, string name)
         {
             File newFile = new File(manager.GetNewFileId(), computer, parent, name);
-            newFile.isFolder = true;
+            newFile.Type = FileType.Directory;
             manager.RegisterNewFile(newFile);
             return newFile;
         }
@@ -185,7 +193,7 @@ namespace HackLinks_Server.Files
 
         public bool HasPermission(int userId, List<Group> privs, bool read, bool write, bool execute)
         {
-            if (privs.Contains(Group))
+            if (privs.Contains((Group) groupId))
             {
                 if (Permissions.CheckPermission(FilePermissions.PermissionType.Group, read, write, execute))
                 {
@@ -204,19 +212,19 @@ namespace HackLinks_Server.Files
             return Permissions.CheckPermission(FilePermissions.PermissionType.Others, read, write, execute);
         }
 
-        virtual public bool IsFolder()
+        public virtual bool IsFolder()
         {
-            return isFolder;
+            return Type == FileType.Directory;
         }
 
-        virtual public void RemoveFile()
+        public virtual void RemoveFile()
         {
             Parent.children.Remove(this);
-            ParentId = 0;
+            Parent = null;
             if (Type == FileType.LOG)
             {
                 Log log = null;
-                foreach (var log2 in Server.Instance.GetComputerManager().GetNodeById(ComputerId).logs)
+                foreach (var log2 in Computer.logs)
                 {
                     if (log2.file == this)
                     {
@@ -224,14 +232,10 @@ namespace HackLinks_Server.Files
                         break;
                     }
                 }
-                Server.Instance.GetComputerManager().GetNodeById(ComputerId).logs.Remove(log);
+                Computer.logs.Remove(log);
             }
         }
-
-        public void SetType(int specType)
-        {
-            Type = (FileType)specType;
-        }
+        
 
         public string[] GetLines()
         {
@@ -278,6 +282,56 @@ namespace HackLinks_Server.Files
                 }
             }
         }
+        public static void CreateDefaults(Node n) {
+            File root = new File("",null,FileType.Directory,"",n,0,774,0);
+            File etc = root.MkDir("etc");
+            File bin = root.MkDir("bin");
+            File daemons = root.MkDir("daemons");
+            etc.MkFile("passwd", groupId: 1,
+                content:
+                "root:x:0:0:root:/root:/bin/hash\r\nadmin:x:1:1:root:/root:/bin/hash\r\nuser:x:2:2:root:/root:/bin/hash\r\nguest:x:3:3:root:/root:/bin/hash\r\n");
+            etc.MkFile("group", groupId: 1,
+                content:
+                "root:x:0:\r\nadmin:x:1:root,admin\r\nuser:x:2:root,admin,user\r\nguest:x:3:root,admin,user,guest\r\n");
+            string[] hackybox = {
+                "hackybox", "ping", "ls", "connect", "disconnect", "dc", "ls", "touch", "view", "mkdir", "rm", "login",
+                "chown", "fedit", "netmap", "music"
+            };
+            foreach (var s in hackybox) {
+                bin.MkFile(s, "hackybox");
+            }
 
+            daemons.MkFile("autorun", "irc\r\nbank", groupId: 1);
+            bin.MkFile("admin", "serveradmin");
+            bin.MkFile("cadmin", "computeradmin");
+            bin.MkFile("hash", "hash");
+        }
+
+        private File(int id, String name, File parent, FileType type, string content, Node computer, int groupId, int permissions, int ownerId) {
+            
+        }
+        
+        public File MkDir(string name, int ownerid = 0 ,int permissions = 774,int groupId = 0)
+        {
+            return new File(name,this,FileType.Directory,"",this.Computer,groupId,permissions,ownerid);
+        }
+        
+        public File MkFile(string name,string content = "", int ownerid = 0 ,int permissions = 774,int groupId = 0)
+        {
+            return new File(name,this,FileType.Regular,content,this.Computer,groupId,permissions,ownerid);
+        }
+        
+        private File(String name, File parent, FileType type, string content, Node computer, int groupId, int permissions, int ownerId) {
+            this.id = computer.fileSystem.fileSystemManager.GetNewFileId();
+            this.Parent = parent;
+            this.Type = type;
+            this.Content = content;
+            this.Computer = computer;
+            this.groupId = groupId;
+            this.OwnerId = ownerId;
+            this.Permissions = FilePermissions.FromDigit(this,permissions);
+            computer.fileSystem.fileSystemManager.RegisterNewFile(this);
+        }
+        
     }
 }

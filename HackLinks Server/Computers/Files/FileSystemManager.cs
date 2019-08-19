@@ -49,5 +49,9 @@ namespace HackLinks_Server.Computers.Files
         {
             return fileMap.ContainsKey(id);
         }
+
+        public File CreateRootFile(Node n) {
+            File root = File.GetRoot(n);
+        }
     }
 }

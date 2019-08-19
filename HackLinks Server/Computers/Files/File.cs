@@ -283,28 +283,6 @@ namespace HackLinks_Server.Files
             }
         }
         public static void CreateDefaults(Node n) {
-            File root = new File("",null,FileType.Directory,"",n,0,774,0);
-            File etc = root.MkDir("etc");
-            File bin = root.MkDir("bin");
-            File daemons = root.MkDir("daemons");
-            etc.MkFile("passwd", groupId: 1,
-                content:
-                "root:x:0:0:root:/root:/bin/hash\r\nadmin:x:1:1:root:/root:/bin/hash\r\nuser:x:2:2:root:/root:/bin/hash\r\nguest:x:3:3:root:/root:/bin/hash\r\n");
-            etc.MkFile("group", groupId: 1,
-                content:
-                "root:x:0:\r\nadmin:x:1:root,admin\r\nuser:x:2:root,admin,user\r\nguest:x:3:root,admin,user,guest\r\n");
-            string[] hackybox = {
-                "hackybox", "ping", "ls", "connect", "disconnect", "dc", "ls", "touch", "view", "mkdir", "rm", "login",
-                "chown", "fedit", "netmap", "music"
-            };
-            foreach (var s in hackybox) {
-                bin.MkFile(s, "hackybox");
-            }
-
-            daemons.MkFile("autorun", "irc\r\nbank", groupId: 1);
-            bin.MkFile("admin", "serveradmin");
-            bin.MkFile("cadmin", "computeradmin");
-            bin.MkFile("hash", "hash");
         }
 
         private File(int id, String name, File parent, FileType type, string content, Node computer, int groupId, int permissions, int ownerId) {
@@ -332,6 +310,9 @@ namespace HackLinks_Server.Files
             this.Permissions = FilePermissions.FromDigit(this,permissions);
             computer.fileSystem.fileSystemManager.RegisterNewFile(this);
         }
-        
+
+        public static File GetRoot(Node node) {
+            return new File("",null,FileType.Directory,"",node,0,774,0);
+        }
     }
 }

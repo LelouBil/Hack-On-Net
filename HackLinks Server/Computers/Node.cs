@@ -23,6 +23,11 @@ namespace HackLinks_Server.Computers
         [Key] [Required] [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int id { get; set; }
         
+        public const string DefaultGroups = "root:x:0:\r\nadmin:x:1:root,admin\r\nuser:x:2:root,admin,user\r\nguest:x:3:root,admin,user,guest\r\n";
+        
+        public const string DefaultPasswd = "root:x:0:0:root:/root:/bin/hash\r\nadmin:x:1:1:root:/root:/bin/hash\r\nuser:x:2:2:root:/root:/bin/hash\r\nguest:x:3:3:root:/root:/bin/hash\r\n";
+
+        
         [Index] [Required] [StringLength(15)]
         public string ip { get; set; }
 
@@ -33,7 +38,7 @@ namespace HackLinks_Server.Computers
         public int type { get; set; }
         
 
-        public readonly FileSystem fileSystem = new FileSystem(Server.Instance.FileSystemManager);
+        public readonly FileSystem fileSystem;
 
         public List<Session> sessions = new List<Session>();
         public List<Daemon> daemons = new List<Daemon>();
@@ -53,9 +58,9 @@ namespace HackLinks_Server.Computers
 
         public int NextPID => freedPIDs.Count > 0 ? freedPIDs.Pop() : nextPID++;
 
-        public Node()
-        {
-             Kernel = new Kernel(this);
+        public Node() {
+            fileSystem = new FileSystem(Server.Instance.FileSystemManager,this);
+            Kernel = new Kernel(this);
         }
 
         public Session GetSession(int processId)

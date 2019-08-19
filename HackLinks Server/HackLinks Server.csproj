@@ -159,7 +159,7 @@
     <Content Include="docs\MySqlParameter.xml" />
     <Content Include="docs\MySqlParameterCollection.xml" />
     <Content Include="docs\MySqlTransaction.xml" />
-    <EmbeddedResource Include="Ressources\SqlSchema.sql" />
+    <EmbeddedResource Include="Resources\SqlSchema.sql" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HackLinksCommon\HackLinksCommon.csproj">

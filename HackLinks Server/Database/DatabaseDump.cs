@@ -17,7 +17,7 @@ namespace HackLinks_Server.Database
 
         public static string LoadCommands() {
             var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "HackLinks_Server.Ressources.SqlSchema.sql";
+            var resourceName = "HackLinks_Server.Resources.SqlSchema.sql";
 
             using (Stream stream = assembly.GetManifestResourceStream(resourceName))
                 using (StreamReader reader = new StreamReader(stream))

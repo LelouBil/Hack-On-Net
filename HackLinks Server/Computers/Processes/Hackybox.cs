@@ -525,7 +525,7 @@ namespace HackLinks_Server.Computers.Processes
                 return true;
             }
             //TODO kernel
-            process.computer.Kernel.AddNodeToNetMap(process, command[1], command[2], command[3]);
+            process.computer.Kernel.AddNodeToNetMap(process, Server.Instance.DatabaseLink.Computers.Find(command[1]), command[2], command[3]);
             return true;
         }
 

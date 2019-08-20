@@ -1,20 +1,15 @@
 ﻿using HackLinks_Server.Computers;
-using HackLinks_Server.Computers.Permissions;
-using HackLinks_Server.Files;
-using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Data.Entity;
-using System.Data.Entity.Core.EntityClient;
 using System.Data.SqlClient;
-using System.Data.SQLite;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using HackLinks_Server.Computers.DataObjects;
 using HackLinks_Server.Computers.Files;
-using HackLinks_Server.Util;
+using HackLinks_Server.Files;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace HackLinks_Server.Database {
     public class DatabaseLink : DbContext {
@@ -28,32 +23,54 @@ namespace HackLinks_Server.Database {
 
         public DatabaseLink(ConfigUtil.ConfigData config) : base(GetConnectionString(config)) { }
 
-        private static string GetConnectionString(ConfigUtil.ConfigData config) {
+        private static DbContextOptions<DatabaseLink> GetConnectionString(ConfigUtil.ConfigData config) {
+            DbContextOptionsBuilder<DatabaseLink> options = new DbContextOptionsBuilder<DatabaseLink>();
             DbConnectionStringBuilder connectionStringBuilder;
-            string provider;
             if (config.Sqlite) {
-                var sqlitecn = new SQLiteConnectionStringBuilder();
-                provider = "System.Data.SQLite.EF6";
+                
+                var sqlitecn = new SqliteConnectionStringBuilder();
+                
                 sqlitecn.DataSource = dbpath;
-                connectionStringBuilder = sqlitecn;
+                options.UseSqlite(sqlitecn.ToString());
             }
             else {
-                var sqlcn = new MySqlConnectionStringBuilder();
-                provider = "MySql.Data.MySqlClient";
-                sqlcn.Server = config.MySQLServer;
-                sqlcn.Database = config.Database;
+                var sqlcn = new SqlConnectionStringBuilder();
+                sqlcn.DataSource = config.MySQLServer;
                 sqlcn.UserID = config.UserID;
                 sqlcn.Password = config.Password;
-                connectionStringBuilder = sqlcn;
+                options.UseMySql(sqlcn.ToString());
             }
-
-            var ent = new EntityConnectionStringBuilder();
-            ent.Provider = provider;
-            ent.ProviderConnectionString = connectionStringBuilder.ConnectionString;
-            return ent.ConnectionString;
+            return options.Options;
         }
-        
-        
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) {
+            modelBuilder.Entity<ServerAccount>()
+                .HasOne(n => n.homeComputer)
+                .WithOne(n => n.owner)
+                .HasForeignKey<Node>(n => n.OwnerId);
+
+            modelBuilder.Entity<ServerAccount>()
+                .Property(l => l.netmap)
+                .HasConversion(l => ServerAccount.NetMapNode.maptoList(l), l => ServerAccount.NetMapNode.ListToMap(l));
+            var conv = new ValueConverter<List<Permissions>,string>(
+                p => string.Join(",",p.ToArray()),
+                s => s.Split(',').Select(e => (Permissions)Enum.Parse(typeof(Permissions),e,true)).ToList()
+            );
+            modelBuilder.Entity<ServerAccount>()
+                .Property(f => f.permissions)
+                .HasConversion(conv);
+            modelBuilder.Entity<Node>()
+                .HasOne(f => f.fileSystem);
+            modelBuilder.Entity<ServerAccount>().HasIndex(m => m.mailaddress).IsUnique();
+//            modelBuilder.Entity<FileSystem>().HasOne(f => f.RootFile).WithOne(f => f.FileSystem)
+//                .HasForeignKey<FileSystem>(f => f.RootFileId).IsRequired(false);
+            modelBuilder.Entity<File>().HasOne(f => f.FileSystem).WithOne().HasForeignKey<File>(f => f.FilesystemId);
+            modelBuilder.Entity<File>().HasOne(f => f.Parent).WithOne();
+            
+            modelBuilder.Entity<File>()
+                .HasIndex(m => new {m.Name,m.ParentId,m.FilesystemId}).IsUnique();
+        }
+
 
         public bool TryLogin(GameClient client, string tempUsername, string tempPass, out ServerAccount homeId)
         {
@@ -77,10 +94,8 @@ namespace HackLinks_Server.Database {
         }
         
 
-        public void AddUserNode(ServerAccount acc, string ip, string pos) {
-            Node n = new Node(ip);
-            acc.Nodes.Add(n);
-            acc.netmap.Add(n,pos);
+        public void AddUserNode(ServerAccount acc, Node n,string pos) {
+            acc.netmap.Add(new ServerAccount.NetMapNode(n.ip,pos));
         }
         
 
@@ -99,20 +114,21 @@ namespace HackLinks_Server.Database {
         
 
         public void RebuildDatabase() {
-            Binaries.RemoveRange(Binaries);
-            ServerAccounts.RemoveRange(ServerAccounts);
-            FileSystems.RemoveRange(FileSystems);
-            Computers.RemoveRange(Computers);
-
-            ServerAccounts.AddRange(ServerAccount.Defaults);
-            
-            Binaries.AddRange(Binary.getBinaries());
+            Database.EnsureDeleted();
+            Database.Migrate();
             
             Computers.AddRange(Node.Defaults);
+            SaveChanges();
+            Binaries.AddRange(Binary.getBinaries());
+            ServerAccounts.AddRange(ServerAccount.Defaults);
+            SaveChanges();
+
+
         }
 
         public DbSet<ServerAccount> GetUsersInDatabase() {
             return ServerAccounts;
         }
     }
+    
 }

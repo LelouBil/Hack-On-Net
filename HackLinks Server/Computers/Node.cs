@@ -20,31 +20,32 @@ namespace HackLinks_Server.Computers
     {
         public static string SERVER_CONFIG_PATH = "/cfg/server.cfg";
 
-        [Key] [Required] [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id { get; set; }
-        
         public const string DefaultGroups = "root:x:0:\r\nadmin:x:1:root,admin\r\nuser:x:2:root,admin,user\r\nguest:x:3:root,admin,user,guest\r\n";
         
         public const string DefaultPasswd = "root:x:0:0:root:/root:/bin/hash\r\nadmin:x:1:1:root:/root:/bin/hash\r\nuser:x:2:2:root:/root:/bin/hash\r\nguest:x:3:3:root:/root:/bin/hash\r\n";
 
         
-        [Index] [Required] [StringLength(15)]
+        [Key] [Required] [StringLength(15)]
         public string ip { get; set; }
 
-        [Required] 
-        public ServerAccount owner { get; set; }
+        
+        public virtual ServerAccount owner { get; set; }
+        
+        public string OwnerId { get; set; }
         
         [Required]
         public int type { get; set; }
         
-
-        public readonly FileSystem fileSystem;
+        
+        public virtual FileSystem fileSystem { get; private set; }
 
         public List<Session> sessions = new List<Session>();
         public List<Daemon> daemons = new List<Daemon>();
         public List<Log> logs = new List<Log>();
         public string bankAccountRedirectionInfo = "";
 
+        
+        [NotMapped]
         public Kernel Kernel { get; set; }
 
         private Dictionary<int, Process> processes = new Dictionary<int, Process>();
@@ -59,18 +60,23 @@ namespace HackLinks_Server.Computers
         public int NextPID => freedPIDs.Count > 0 ? freedPIDs.Pop() : nextPID++;
         public static IEnumerable<Node> Defaults { get; set; } = new List<Node>() {
             new Node() {
-                ip = "8.8.8.8",
-                owner = ServerAccount.Defaults[0]
+                ip = "8.8.8.8"
             }
         };
 
         public Node() {
             fileSystem = new FileSystem();
+            Server.Instance.DatabaseLink.SaveChanges();
+            fileSystem.SetupDefaults();
             Kernel = new Kernel(this);
         }
 
-        public Node(string ip) : this() {
+        public Node(FileSystem fileSystem, string ip, ServerAccount owner, int type) {
+            this.fileSystem = fileSystem;
             this.ip = ip;
+            this.owner = owner;
+            this.type = type;
+            Kernel = new Kernel(this);
         }
 
         public Session GetSession(int processId)

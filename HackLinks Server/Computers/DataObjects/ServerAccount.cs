@@ -15,17 +15,43 @@ namespace HackLinks_Server.Computers.DataObjects {
 		[StringLength(64)]
 		public string password { get; set; }
 		
-		[Index] [StringLength(64)]
+		[StringLength(64)]
 		public string mailaddress  { get; set; }
 		
 		[Required]
-		public Dictionary<Node,string> netmap { get; set; }
-		
+		public List<NetMapNode> netmap { get; set; }
+
+		public class NetMapNode {
+			[Required] [Key]
+			public int id { get; set; }
+			public NetMapNode(string ip, string pos) {
+				this.ip = ip;
+				this.pos = pos;
+			}
+
+			public string ip { get; set; }
+
+			public NetMapNode() {
+				
+			}
+
+			public static String maptoList(List<NetMapNode> list) {
+				return string.Join(",", list.Select(x => x.ip + ":" + x.pos).ToArray());
+			}
+			
+			public static List<NetMapNode> ListToMap(String s ) {
+				return s.Split(',').Select(a => new NetMapNode(a.Split(':')[0], a.Split(':')[1])).ToList();
+			}
+
+			[Required]
+			public string pos { get; set; } //todo replace by type
+		}
+
 		public string content { get; set; }
 		
-		public Node homeComputer { get; set; }
+		public virtual Node homeComputer { get; set; }
 
-		[Required]
+		
 		public List<HackLinks_Server.Permissions> permissions { get; set; }
 		
 		public int banned { get; set; }
@@ -33,13 +59,13 @@ namespace HackLinks_Server.Computers.DataObjects {
 		[Required]
 		public bool permBanned { get; set; }
 
-		public static List<ServerAccount> Defaults { get; } = new List<ServerAccount>() {
+		public static List<ServerAccount> Defaults { get; set; } = new List<ServerAccount>() {
 			new ServerAccount() {
 				username = "test",
 				password = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 				mailaddress = "test@hnmp.net",
-				netmap = new Dictionary<Node, string>(),
-				homeComputer = new Node(), //todo
+				netmap = new List<NetMapNode>(),
+				homeComputer = Server.Instance.DatabaseLink.Computers.First(), //todo
 				permissions = new List<HackLinks_Server.Permissions>(){HackLinks_Server.Permissions.Admin},
 				banned = 0,
 				permBanned = false
@@ -50,7 +76,7 @@ namespace HackLinks_Server.Computers.DataObjects {
 		public string StringMap => StringNMap();
 
 		private string StringNMap() {
-			return string.Join(",", netmap.Select(x => x.Key.ip + ":" + x.Value).ToArray());
+			return NetMapNode.maptoList(netmap);
 		}
 
 		public void SetUserBanStatus(bool ban, bool permbanned, int expiry) {

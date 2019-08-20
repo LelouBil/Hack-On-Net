@@ -4,11 +4,7 @@ using System;
 namespace HackLinks_Server.Computers
 {
     public class FilePermissions {
-
-        public FilePermissions(File file)
-        {
-            this.file = file;
-        }
+        
 
         public enum PermissionType
         {
@@ -26,8 +22,7 @@ namespace HackLinks_Server.Computers
         }
 
         private File file;
-
-        private int permissionValue = 0;
+        
         public int PermissionValue { get; set; }
 
         public int Owner { get => GetPermissionDigit(PermissionType.User); set => SetPermission(PermissionType.User, value); }
@@ -53,7 +48,7 @@ namespace HackLinks_Server.Computers
 
         public void SetPermission(PermissionType type, int value)
         {
-            permissionValue = (PermissionValue % (int)type) + ((PermissionValue / ((int)type * 10)) * ((int)type * 10) + ((int)type * value));
+            PermissionValue = (value % (int)type) + ((value / ((int)type * 10)) * ((int)type * 10) + ((int)type * value));
         }
 
         public int GetPermissionDigit(PermissionType type)
@@ -86,9 +81,9 @@ namespace HackLinks_Server.Computers
             return (GetPermissionDigit(type) & value) == value;
         }
 
-        public static FilePermissions FromDigit(File f,int permissions) {
-            return new FilePermissions(f) {
-                permissionValue = permissions
+        public static FilePermissions FromDigit(int permissions) {
+            return new FilePermissions() {
+                PermissionValue = permissions
             };
         }
     }

@@ -4,11 +4,11 @@ using MySql.Data.MySqlClient;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HackLinks_Server.Util;
+using Microsoft.EntityFrameworkCore;
 
 namespace HackLinks_Server.Computers
 {

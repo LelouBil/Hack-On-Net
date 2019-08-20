@@ -15,18 +15,25 @@ namespace HackLinks_Server.Computers.Files
     public class FileSystem
     {
 
-        [Required]
-        public File RootFile;
+        [Key] [Required]
+        public int id { get; set; }
+        
+        public File RootFile { get; set; }
 
 
         public FileSystem()
         {
             this.RootFile = File.GetRoot(this);
-            SetupDefaults();
+            
             
         }
 
-        private void SetupDefaults() {
+        public FileSystem(int id,File RootFile) {
+            this.id = id;
+            this.RootFile = RootFile;
+        }
+
+        public void SetupDefaults() {
             File etc = RootFile.MkDir("etc");
             File bin = RootFile.MkDir("bin");
             File daemons = RootFile.MkDir("daemons");

@@ -2,16 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using HackLinks_Server.Computers;
-using HackLinks_Server.Computers.DataObjects;
 using HackLinks_Server.Computers.Files;
 using HackLinks_Server.Computers.Permissions;
 using HackLinks_Server.Computers.Processes;
 using HackLinks_Server.Util;
-using MySql.Data.MySqlClient;
 
 namespace HackLinks_Server.Files
 {
@@ -28,16 +23,17 @@ namespace HackLinks_Server.Files
             // TODO other types 
         }
 
-        [Required] [StringLength(255)] 
-        [Index("uniquefiles",0,IsUnique = true)]
+        [Required] [StringLength(255)]
         public string Name { get; set; }
         
+        [Key] [Required]
+        public int id { get; set; }
         
         [Required]
         public int OwnerId { get; set; }
 
         [Required]
-        public int groupId { get; }
+        public int groupId { get; private set; }
         
         public Group Group {
             get => (Group) groupId;
@@ -50,23 +46,27 @@ namespace HackLinks_Server.Files
             get => content;
             set {
                 content = value;
-                Checksum = content.GetHashCode();
+                Checksum = content?.GetHashCode() ?? 0;
             }
         }
 
-        [Required]
-        [Index("uniquefiles",1,IsUnique = true)]
-        private File ParentFile { get; set; }
+        public virtual File ParentFile { get; set; }
+        [ForeignKey("File")]
+        public int ParentId { get; set; }
 
-
-        [Required] [Index("uniquefiles", 2, IsUnique = true)]
-        public FileSystem FileSystem { get; }
+        
+        public int? FilesystemId { get; set; }
+        public virtual FileSystem FileSystem { get; set; }
 
         [Required]
         public FileType Type { get; set; } = FileType.Regular;
 
         [Required]
-        public FilePermissions Permissions { get; set; }
+        public int filePermissions { get; set; }
+        [NotMapped]
+        public FilePermissions Permissions { get => FilePermissions.FromDigit(filePermissions);
+            set => filePermissions = value.PermissionValue;
+        }
         
         
         public int Checksum { get; private set; }
@@ -91,7 +91,7 @@ namespace HackLinks_Server.Files
             {
                 this.Parent.children.Add(this);
             }
-            Permissions = new FilePermissions(this);
+            Permissions = new FilePermissions();
         }
         
 
@@ -237,16 +237,22 @@ namespace HackLinks_Server.Files
             }
         }
 
-        private File(String name,FileSystem fileSystem, FileType type, string content, int groupId, int permissions, int ownerId) {
-            this.Parent = null;
-            this.Type = type;
-            this.Content = content;
-            this.FileSystem = fileSystem;
+        //used by db
+        private File(String Name,FileSystem FileSystem,File ParentFile, FileType Type, string Content, int groupId, int Permissions, int OwnerId) {
+            this.Name = Name;
+            this.ParentFile = ParentFile;
+            this.Type = Type;
+            this.Content = Content;
+            this.FileSystem = FileSystem;
             this.groupId = groupId;
-            this.OwnerId = ownerId;
-            this.Permissions = FilePermissions.FromDigit(this,permissions);
+            this.OwnerId = OwnerId;
+            this.Permissions = FilePermissions.FromDigit(Permissions);
+            this.ParentFile?.children.Add(this);
         }
-        
+
+        private File() {
+            
+        }
         public File MkDir(string name, int ownerid = 0 ,int permissions = 774,int groupId = 0)
         {
             File child = new File(name,this,FileType.Directory,"",groupId,permissions,ownerid);
@@ -261,18 +267,20 @@ namespace HackLinks_Server.Files
             return child;
         }
         
-        private File(String name, File parent, FileType type, string content, int groupId, int permissions, int ownerId) {
-            this.Parent = parent;
-            this.Type = type;
+        private File(String Name, File ParentFile, FileType Type, string Content, int groupId, int Permissions, int OwnerId) {
+            this.Name = Name;
+            this.ParentFile = ParentFile;
+            this.Type = Type;
             this.Content = content;
-            this.FileSystem = parent.FileSystem;
+            this.FileSystem = ParentFile.FileSystem;
             this.groupId = groupId;
-            this.OwnerId = ownerId;
-            this.Permissions = FilePermissions.FromDigit(this,permissions);
+            this.OwnerId = OwnerId;
+            this.Permissions = FilePermissions.FromDigit(Permissions);
+            ParentFile?.children.Add(this);
         }
 
         public static File GetRoot(FileSystem fs) {
-            return new File("",fs,FileType.Directory,"",0,774,0);
+            return new File("",fs,null,FileType.Directory,"",0,774,0);
         }
 
         public static File CreateNewFile(File parent, string filename, string content = "") {

@@ -13,6 +13,10 @@ namespace HackLinks_Server.Computers.DataObjects {
 			this.checksum = type1Name.ToLower().GetHashCode();
 		}
 
+		public Binary() {
+			
+		}
+
 		[Key] [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		[Required]
 		public int id { get; set; }
@@ -38,7 +42,6 @@ namespace HackLinks_Server.Computers.DataObjects {
 			{
 				objects.Add(type);
 			}
-			objects.Sort();
 			return objects;
 		}
 	}

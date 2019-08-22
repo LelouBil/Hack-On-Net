@@ -82,10 +82,10 @@ namespace HackLinks_Server.Database {
         }
         
 
-        public bool SetUserBanStatus(string ac, int banExpiry, bool unban, bool permBan) {
+        public bool SetUserBanStatus(string ac, int banExpiry, bool unban) {
             ServerAccount acc = ServerAccounts.Find(ac);
             if (acc == null) return false;
-            acc.SetUserBanStatus(!unban,permBan,banExpiry);
+            acc.SetUserBanStatus(!unban,banExpiry);
             return true;
         }
 

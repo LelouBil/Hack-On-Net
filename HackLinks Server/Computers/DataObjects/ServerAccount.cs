@@ -120,7 +120,7 @@ namespace HackLinks_Server.Computers.DataObjects {
 					return true;
 				}
 				if (this.banned <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-					SetUserBanStatus(false, true, 0);
+					SetUserBanStatus(false, false, 0);
 			}
 			catch (Exception) {
 				// ignored

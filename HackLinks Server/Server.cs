@@ -83,9 +83,9 @@ namespace HackLinks_Server
                     if (DatabaseLink.TryLogin(client, tempUsername, tempPass, out ServerAccount account))
                     {
                         client.account = account;
-                        if (/*DatabaseLink.CheckUserBanStatus(client.username, out banExpiry)*/false)
+                        if (DatabaseLink.CheckUserBanStatus(client.account, out banExpiry))
                         {
-                            if (banExpiry == 0)
+                            if (banExpiry == -1)
                             {
                                 client.Send(PacketType.LOGRE, "2", "You have been banned permanently");
                                 client.Disconnect();

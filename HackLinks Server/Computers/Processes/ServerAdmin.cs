@@ -227,7 +227,7 @@ namespace HackLinks_Server.Computers.Processes
             }
             if (command.Count < 4)
             {
-                Server.Instance.DatabaseLink.SetUserBanStatus(command[1], 0, false, command[3] == "t" ? true : false);
+                Server.Instance.DatabaseLink.SetUserBanStatus(command[1], command[3] == "t" ? -1 : 0, false);
                 return true;
             }
             int days = Convert.ToInt32(command[4]);
@@ -238,7 +238,7 @@ namespace HackLinks_Server.Computers.Processes
             minutes = minutes * 60;
             int banExpiry = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds() + days + hours + minutes;
 
-            if (!Server.Instance.DatabaseLink.SetUserBanStatus(command[1], banExpiry, false, false))
+            if (!Server.Instance.DatabaseLink.SetUserBanStatus(command[1], banExpiry, false))
                 process.Print("The user does not exist in the user database");
             return true;
         }
@@ -252,7 +252,7 @@ namespace HackLinks_Server.Computers.Processes
                 client.Send(NetUtil.PacketType.MESSG, "Usage: unban [username]");
                 return true;
             }
-            Server.Instance.DatabaseLink.SetUserBanStatus(command[1], 0, true, false);
+            Server.Instance.DatabaseLink.SetUserBanStatus(command[1], 0, true);
             return true;
         }
 

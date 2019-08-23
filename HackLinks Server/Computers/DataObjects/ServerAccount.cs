@@ -52,10 +52,8 @@ namespace HackLinks_Server.Computers.DataObjects {
 		
 		public List<HackLinks_Server.Permissions> permissions { get; set; }
 		
+        [Required]
 		public int banned { get; set; }
-		
-		[Required]
-		public bool permBanned { get; set; }
 
 		public static List<ServerAccount> Defaults { get; set; } = new List<ServerAccount>() {
 			new ServerAccount() {
@@ -65,8 +63,7 @@ namespace HackLinks_Server.Computers.DataObjects {
 				netmap = new List<NetMapNode>(),
 				homeComputer = Server.Instance.DatabaseLink.Computers.First(), //todo
 				permissions = new List<HackLinks_Server.Permissions>(){HackLinks_Server.Permissions.Admin},
-				banned = 0,
-				permBanned = false
+				banned = 0
 			}
 		};
 
@@ -77,21 +74,19 @@ namespace HackLinks_Server.Computers.DataObjects {
 			return NetMapNode.maptoList(netmap);
 		}
 
-		public void SetUserBanStatus(bool ban, bool permbanned, int expiry) {
+		public void SetUserBanStatus(bool ban, int expiry) {
 			if (ban) {
 				this.banned = expiry;
-				this.permBanned = permbanned;
 			}
 			else {
-				this.banned = -1;
-				this.permBanned = false;
+				this.banned = 0;
 			}
 
 			Server.Instance.DatabaseLink.SaveChanges();
 			GameClient client = Server.Instance.clients.Find(c => c.account.Equals(this));
 			if(client == null) return;
 			try {
-				client.Send(HackLinksCommon.NetUtil.PacketType.DSCON, "You have been banned from the server");
+				client.Send(HackLinksCommon.NetUtil.PacketType.DSCON, "You have been banned from the server. Reconnect to see ban expiry");
 				client.netDisconnect();
 			}
 			catch (Exception e){}
@@ -100,9 +95,9 @@ namespace HackLinks_Server.Computers.DataObjects {
 		public bool IsBanned(out int banExpiry) {
 			try
 			{
-				if (permBanned)
+				if (banned == -1)
 				{
-					banExpiry = 0;
+					banExpiry = -1;
 					return true;
 				}
 			}
@@ -118,7 +113,7 @@ namespace HackLinks_Server.Computers.DataObjects {
 					return true;
 				}
 				if (this.banned <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-					SetUserBanStatus(false, true, 0);
+					SetUserBanStatus(false, 0);
 			}
 			catch (Exception) {
 				// ignored

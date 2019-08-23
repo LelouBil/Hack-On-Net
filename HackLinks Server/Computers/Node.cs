@@ -64,6 +64,8 @@ namespace HackLinks_Server.Computers
             }
         };
 
+        public int? FileSystemId { get; set; }
+
         public Node() {
             fileSystem = new FileSystem();
             Server.Instance.DatabaseLink.SaveChanges();

@@ -47,8 +47,6 @@ namespace HackLinks_Server.Computers.DataObjects {
 			public string pos { get; set; } //todo replace by type
 		}
 
-		public string content { get; set; }
-		
 		public virtual Node homeComputer { get; set; }
 
 		

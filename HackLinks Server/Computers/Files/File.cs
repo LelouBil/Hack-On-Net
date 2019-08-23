@@ -35,13 +35,16 @@ namespace HackLinks_Server.Files
         [Required]
         public int groupId { get; private set; }
         
+        [NotMapped]
         public Group Group {
             get => (Group) groupId;
-            set => throw new NotImplementedException();
+            set => groupId = (int) value;
         }
 
         [Required] public string content { get; set; } // TODO make hash function portable/low collision eg. https://softwareengineering.stackexchange.com/questions/49550/which-hashing-algorithm-is-best-for-uniqueness-and-speed
 
+        
+        [NotMapped]
         public string Content {
             get => content;
             set {
@@ -49,11 +52,7 @@ namespace HackLinks_Server.Files
                 Checksum = content?.GetHashCode() ?? 0;
             }
         }
-
-        public virtual File ParentFile { get; set; }
-        [ForeignKey("File")]
-        public int ParentId { get; set; }
-
+        
         
         public int? FilesystemId { get; set; }
         public virtual FileSystem FileSystem { get; set; }
@@ -69,18 +68,14 @@ namespace HackLinks_Server.Files
         }
         
         
+        
         public int Checksum { get; private set; }
         
         
-        internal File Parent { get => ParentFile;
-            set {
-                Parent?.children.RemoveAll(child => child.Equals(this));
-                value?.children.Add(this);
-                ParentFile = value;
-            }
-        }
-        
-        public List<File> children = new List<File>();
+        public int? ParentId { get; set; }
+        public virtual File Parent { get; set; }
+
+        public virtual List<File> children { get; set; } = new List<File>();
 
         protected File(FileSystem fs, File parent, string name)
         {
@@ -238,16 +233,15 @@ namespace HackLinks_Server.Files
         }
 
         //used by db
-        private File(String Name,FileSystem FileSystem,File ParentFile, FileType Type, string Content, int groupId, int Permissions, int OwnerId) {
+        private File(String Name,FileSystem FileSystem,File Parent, FileType Type, string Content, int groupId, int Permissions, int OwnerId) {
             this.Name = Name;
-            this.ParentFile = ParentFile;
+            this.Parent = Parent;
             this.Type = Type;
             this.Content = Content;
             this.FileSystem = FileSystem;
             this.groupId = groupId;
             this.OwnerId = OwnerId;
             this.Permissions = FilePermissions.FromDigit(Permissions);
-            this.ParentFile?.children.Add(this);
         }
 
         private File() {
@@ -256,27 +250,24 @@ namespace HackLinks_Server.Files
         public File MkDir(string name, int ownerid = 0 ,int permissions = 774,int groupId = 0)
         {
             File child = new File(name,this,FileType.Directory,"",groupId,permissions,ownerid);
-            this.children.Add(child);
             return child;
         }
         
         public File MkFile(string name,string content = "", int ownerid = 0 ,int permissions = 774,int groupId = 0)
         {
             File child = new File(name,this,FileType.Regular,content,groupId,permissions,ownerid);
-            this.children.Add(child);
             return child;
         }
         
-        private File(String Name, File ParentFile, FileType Type, string Content, int groupId, int Permissions, int OwnerId) {
+        private File(String Name, File Parent, FileType Type, string Content, int groupId, int Permissions, int OwnerId) {
             this.Name = Name;
-            this.ParentFile = ParentFile;
+            this.Parent = Parent;
             this.Type = Type;
             this.Content = content;
-            this.FileSystem = ParentFile.FileSystem;
+            this.FileSystem = Parent.FileSystem;
             this.groupId = groupId;
             this.OwnerId = OwnerId;
             this.Permissions = FilePermissions.FromDigit(Permissions);
-            ParentFile?.children.Add(this);
         }
 
         public static File GetRoot(FileSystem fs) {

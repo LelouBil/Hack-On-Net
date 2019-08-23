@@ -19,6 +19,8 @@ namespace HackLinks_Server.Computers.Files
         public int id { get; set; }
         
         public File RootFile { get; set; }
+        
+        public int? RootFileId { get; set; }
 
 
         public FileSystem()

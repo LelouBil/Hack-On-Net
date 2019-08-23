@@ -23,10 +23,13 @@ namespace HackLinks_Server.Database {
 
         public DatabaseLink(ConfigUtil.ConfigData config) : base(GetConnectionString(config)) { }
 
+        public DatabaseLink() : base(GetConnectionString(null)) { }
+
+
         private static DbContextOptions<DatabaseLink> GetConnectionString(ConfigUtil.ConfigData config) {
             DbContextOptionsBuilder<DatabaseLink> options = new DbContextOptionsBuilder<DatabaseLink>();
             DbConnectionStringBuilder connectionStringBuilder;
-            if (config.Sqlite) {
+            if (config == null || config.Sqlite ) {
                 
                 var sqlitecn = new SqliteConnectionStringBuilder();
                 
@@ -44,31 +47,37 @@ namespace HackLinks_Server.Database {
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
-            modelBuilder.Entity<ServerAccount>()
-                .HasOne(n => n.homeComputer)
-                .WithOne(n => n.owner)
-                .HasForeignKey<Node>(n => n.OwnerId);
-
-            modelBuilder.Entity<ServerAccount>()
-                .Property(l => l.netmap)
-                .HasConversion(l => ServerAccount.NetMapNode.maptoList(l), l => ServerAccount.NetMapNode.ListToMap(l));
             var conv = new ValueConverter<List<Permissions>,string>(
                 p => string.Join(",",p.ToArray()),
                 s => s.Split(',').Select(e => (Permissions)Enum.Parse(typeof(Permissions),e,true)).ToList()
             );
-            modelBuilder.Entity<ServerAccount>()
-                .Property(f => f.permissions)
-                .HasConversion(conv);
-            modelBuilder.Entity<Node>()
-                .HasOne(f => f.fileSystem);
-            modelBuilder.Entity<ServerAccount>().HasIndex(m => m.mailaddress).IsUnique();
-//            modelBuilder.Entity<FileSystem>().HasOne(f => f.RootFile).WithOne(f => f.FileSystem)
-//                .HasForeignKey<FileSystem>(f => f.RootFileId).IsRequired(false);
-            modelBuilder.Entity<File>().HasOne(f => f.FileSystem).WithOne().HasForeignKey<File>(f => f.FilesystemId);
-            modelBuilder.Entity<File>().HasOne(f => f.Parent).WithOne();
-            
-            modelBuilder.Entity<File>()
-                .HasIndex(m => new {m.Name,m.ParentId,m.FilesystemId}).IsUnique();
+            modelBuilder.Entity<ServerAccount>(b => {
+                b.HasOne(n => n.homeComputer)
+                    .WithOne(n => n.owner)
+                    .HasForeignKey<Node>(n => n.OwnerId);
+                b.Property(l => l.netmap)
+                    .HasConversion(l => ServerAccount.NetMapNode.maptoList(l), l => ServerAccount.NetMapNode.ListToMap(l));
+                b.Property(f => f.permissions)
+                    .HasConversion(conv);
+                b.HasIndex(m => m.mailaddress).IsUnique();
+            });
+
+
+            modelBuilder.Entity<File>(b => {
+                b.HasOne(f => f.FileSystem).WithOne().HasForeignKey<File>(f => f.FilesystemId).IsRequired(false);
+                b.HasIndex(m => new {m.Name,m.ParentId,m.FilesystemId}).IsUnique();
+                b.HasMany(f => f.children).WithOne(f => f.Parent).HasForeignKey(f => f.ParentId)
+                    .IsRequired(false);
+            });
+
+            modelBuilder.Entity<FileSystem>(b => {
+                b.HasOne(f => f.RootFile).WithOne(f => f.FileSystem).HasForeignKey<FileSystem>(f => f.RootFileId)
+                    .IsRequired(false);
+            });
+            modelBuilder.Entity<Node>(b => {
+                b.HasOne(f => f.fileSystem).WithOne().HasForeignKey<Node>(f => f.FileSystemId);
+            });
+
         }
 
 
@@ -130,5 +139,6 @@ namespace HackLinks_Server.Database {
             return ServerAccounts;
         }
     }
+
     
 }

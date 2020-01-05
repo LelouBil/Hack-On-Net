@@ -155,9 +155,9 @@ namespace HackLinks_Server.Database {
             Binaries.AddRange(Binary.getBinaries());
             ServerAccounts.AddRange(ServerAccount.Defaults);
             SaveChanges();
-            ServerAccounts.First().Nodes.Add(Node.Defaults[0]);
-            SaveChanges();
-            ServerAccounts.First().netmap.Add(new ServerAccount.NetMapNode(Node.Defaults[0].ip,"0,0"));
+            var defAcc = ServerAccounts.First();
+            defAcc.Nodes.Add(Node.Defaults[0]);
+            defAcc.netmap.Add(new ServerAccount.NetMapNode(Node.Defaults[0].ip,"0,0"));
             SaveChanges();
         }
 

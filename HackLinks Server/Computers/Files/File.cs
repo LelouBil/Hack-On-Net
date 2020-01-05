@@ -84,10 +84,6 @@ namespace HackLinks_Server.Files
             this.Name = name;
             this.Parent = parent;
             Server.Instance.DatabaseLink.Entry(this);
-            if(parent != null)
-            {
-                this.Parent.children.Add(this);
-            }
             Permissions = new FilePermissions();
         }
         
@@ -170,7 +166,6 @@ namespace HackLinks_Server.Files
 
         public void RemoveFile()
         {
-            Parent.children.Remove(this);
             Parent = null;
 //            if (Type == FileType.LOG)
 //            {

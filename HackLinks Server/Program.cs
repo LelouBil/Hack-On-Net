@@ -10,6 +10,7 @@ using Mono.Options;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using HackLinks_Server.Database;
 using HackLinks_Server.Util;
 
 namespace HackLinks_Server
@@ -136,6 +137,11 @@ namespace HackLinks_Server
             Socket listener = new Socket(AddressFamily.InterNetwork,
                 SocketType.Stream, ProtocolType.Tcp);
 
+
+            if (rebuildDB && configData.Sqlite)
+            {
+                File.Delete(DatabaseLink.dbpath);
+            }
             Server.Instance.Initalize(configData);
             //If we're going to rebuild the DB we need to do it before data is loaded but after the server has the mysql config
             if (rebuildDB)

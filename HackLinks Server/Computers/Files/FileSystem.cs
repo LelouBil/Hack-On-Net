@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,23 +17,26 @@ namespace HackLinks_Server.Computers.Files
     {
 
         [Key] [Required]
-        public int id { get; set; }
+        public int FileSystemId { get; set; }
         
-        public File RootFile { get; set; }
-        
-        public int? RootFileId { get; set; }
+        [InverseProperty("FileSystem")]
+        public virtual List<File> AllFiles { get; }
 
+        public File RootFile
+        {
+            get { return AllFiles.Find(f => f.Parent == null); }
+        }
 
         public FileSystem()
         {
-            this.RootFile = File.GetRoot(this);
-            
-            
+            AllFiles = new List<File>();
+            CreateRoot();
         }
 
-        public FileSystem(int id,File RootFile) {
-            this.id = id;
-            this.RootFile = RootFile;
+        public FileSystem(int fileSystemId,File RootFile, List<File> allFiles)
+        {
+            this.FileSystemId = fileSystemId;
+            AllFiles = allFiles;
         }
 
         public void SetupDefaults() {
@@ -58,6 +62,18 @@ namespace HackLinks_Server.Computers.Files
             bin.MkFile("cadmin", "computeradmin");
             bin.MkFile("hash", "hash");
         }
-        
+
+        public void CreateRoot(File newFile = null)
+        {
+            if (newFile == null)
+            {
+                AllFiles.Add(File.GetRoot(this));
+            }
+            else
+            {
+                newFile.Parent = null;
+                AllFiles.Add(newFile);
+            }
+        }
     }
 }

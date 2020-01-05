@@ -35,9 +35,10 @@ namespace HackLinks_Server.Computers
         
         [Required]
         public int type { get; set; }
+
         
         
-        public virtual FileSystem fileSystem { get; private set; }
+        public FileSystem fileSystem { get; private set; }
 
         public List<Session> sessions = new List<Session>();
         public List<Daemon> daemons = new List<Daemon>();
@@ -58,17 +59,15 @@ namespace HackLinks_Server.Computers
 
 
         public int NextPID => freedPIDs.Count > 0 ? freedPIDs.Pop() : nextPID++;
-        public static IEnumerable<Node> Defaults { get; set; } = new List<Node>() {
+        public static List<Node> Defaults { get; set; } = new List<Node>() {
             new Node() {
                 ip = "8.8.8.8"
             }
         };
-
-        public int? FileSystemId { get; set; }
+        
 
         public Node() {
             fileSystem = new FileSystem();
-            Server.Instance.DatabaseLink.SaveChanges();
             fileSystem.SetupDefaults();
             Kernel = new Kernel(this);
         }
@@ -491,7 +490,7 @@ namespace HackLinks_Server.Computers
         {
             if(fileSystem.RootFile != null)
                 throw new ArgumentException("Root file for this computer is already set.");
-            fileSystem.RootFile = newFile;
+            fileSystem.CreateRoot(newFile);
         }
 
         internal void RegisterProcess(Process process)

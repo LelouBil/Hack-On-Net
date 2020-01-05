@@ -23,8 +23,8 @@ namespace HackLinks_Server.Files
             // TODO other types 
         }
 
-        [Required] [StringLength(255)]
-        public string Name { get; set; }
+        [StringLength(255)]
+        public string Name { get; private set; }
         
         [Key] [Required]
         public int id { get; set; }
@@ -41,7 +41,7 @@ namespace HackLinks_Server.Files
             set => groupId = (int) value;
         }
 
-        [Required] public string content { get; set; } // TODO make hash function portable/low collision eg. https://softwareengineering.stackexchange.com/questions/49550/which-hashing-algorithm-is-best-for-uniqueness-and-speed
+        public string content { get; set; } = "";// TODO make hash function portable/low collision eg. https://softwareengineering.stackexchange.com/questions/49550/which-hashing-algorithm-is-best-for-uniqueness-and-speed
 
         
         [NotMapped]
@@ -52,10 +52,9 @@ namespace HackLinks_Server.Files
                 Checksum = content?.GetHashCode() ?? 0;
             }
         }
-        
-        
-        public int? FilesystemId { get; set; }
-        public virtual FileSystem FileSystem { get; set; }
+
+        [InverseProperty("AllFiles")]
+        public FileSystem FileSystem { get; set; }
 
         [Required]
         public FileType Type { get; set; } = FileType.Regular;
@@ -72,16 +71,19 @@ namespace HackLinks_Server.Files
         public int Checksum { get; private set; }
         
         
-        public int? ParentId { get; set; }
-        public virtual File Parent { get; set; }
+        
+        public File Parent { get; set; }
 
+        
+        [InverseProperty("Parent")]
         public virtual List<File> children { get; set; } = new List<File>();
 
-        protected File(FileSystem fs, File parent, string name)
+        private File(FileSystem fs, File parent, string name)
         {
             this.FileSystem = fs;
             this.Name = name;
             this.Parent = parent;
+            Server.Instance.DatabaseLink.Entry(this);
             if(parent != null)
             {
                 this.Parent.children.Add(this);
@@ -161,12 +163,12 @@ namespace HackLinks_Server.Files
             return Permissions.CheckPermission(FilePermissions.PermissionType.Others, read, write, execute);
         }
 
-        public virtual bool IsFolder()
+        public bool IsFolder()
         {
             return Type == FileType.Directory;
         }
 
-        public virtual void RemoveFile()
+        public void RemoveFile()
         {
             Parent.children.Remove(this);
             Parent = null;
@@ -268,10 +270,11 @@ namespace HackLinks_Server.Files
             this.groupId = groupId;
             this.OwnerId = OwnerId;
             this.Permissions = FilePermissions.FromDigit(Permissions);
+            Server.Instance.DatabaseLink.files.Add(this);
         }
 
         public static File GetRoot(FileSystem fs) {
-            return new File("",fs,null,FileType.Directory,"",0,774,0);
+            return new File(" ",fs,null,FileType.Directory,"",0,774,0);
         }
 
         public static File CreateNewFile(File parent, string filename, string content = "") {

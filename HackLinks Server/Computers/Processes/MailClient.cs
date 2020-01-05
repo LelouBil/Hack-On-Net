@@ -222,7 +222,7 @@ namespace HackLinks_Server.Computers.Processes {
                 process.Print("You aren't logged in!");
                 return true;
             }
-            List<File> children = process.computer.fileSystem.RootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Inbox").children;
+            List<File> children = new List<File>(process.computer.fileSystem.RootFile.GetFileAtPath($"mail/users/{client.loggedInAccount.accountName}/Inbox").children);
             if (children.Count == 0) {
                 process.Print("You have no messgaes!");
                 return true;

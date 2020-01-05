@@ -17,8 +17,8 @@ namespace HackLinks_Server.Computers.DataObjects {
 		
 		[StringLength(64)]
 		public string mailaddress  { get; set; }
-		
-		[Required]
+
+		[Required] public string textMapNodes;
 		public List<NetMapNode> netmap { get; set; }
 
 		public class NetMapNode {
@@ -47,7 +47,7 @@ namespace HackLinks_Server.Computers.DataObjects {
 			public string pos { get; set; } //todo replace by type
 		}
 
-		public virtual Node homeComputer { get; set; }
+		public Node homeComputer { get; set; }
 
 		
 		public List<HackLinks_Server.Permissions> permissions { get; set; }
@@ -61,13 +61,15 @@ namespace HackLinks_Server.Computers.DataObjects {
 				password = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 				mailaddress = "test@hnmp.net",
 				netmap = new List<NetMapNode>(),
-				homeComputer = Server.Instance.DatabaseLink.Computers.First(), //todo
+				homeComputer = Node.Defaults[0], //todo
 				permissions = new List<HackLinks_Server.Permissions>(){HackLinks_Server.Permissions.Admin},
 				banned = 0
 			}
 		};
 
-		public List<Node> Nodes => Server.Instance.DatabaseLink.Computers.Where(s => s.owner.Equals(this)).ToList();
+		[InverseProperty("owner")]
+		public virtual List<Node> Nodes { get; set; } = new List<Node>();
+		[NotMapped]
 		public string StringMap => StringNMap();
 
 		private string StringNMap() {

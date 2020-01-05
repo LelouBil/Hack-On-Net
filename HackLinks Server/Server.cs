@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using MySql.Data.MySqlClient;
 using System.Linq;
 using System.Net.Sockets;
@@ -12,6 +13,7 @@ using HackLinks_Server.Computers.DataObjects;
 using static HackLinksCommon.NetUtil;
 using HackLinks_Server.Computers.Files;
 using HackLinks_Server.Database;
+using HackLinks_Server.Migrations;
 using HackLinks_Server.Util;
 
 namespace HackLinks_Server
@@ -34,6 +36,8 @@ namespace HackLinks_Server
 
         public void Initalize(ConfigUtil.ConfigData config)
         {
+            DatabaseLink.sqlite = config.Sqlite;
+            System.Data.Entity.Database.SetInitializer(new MigrateDatabaseToLatestVersion<DatabaseLink,Configuration>());
             DatabaseLink = new DatabaseLink(config);
         }
 
